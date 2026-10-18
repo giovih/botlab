@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Chromium
+Exec=/usr/local/bin/chromium %U
+Icon=/usr/share/pixmaps/chromium.png
+Terminal=false
+Categories=Network;WebBrowser;

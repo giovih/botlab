@@ -83,14 +83,14 @@ GEMINI_API_KEY='$GEMINI_API_KEY'
 BOTLAB_PASSWORD='$BOTLAB_PASSWORD'
 DOMAIN=${IP//./-}.sslip.io
 DOMAIN2=${IP//./-}.nip.io
-BOT_MEMORY=1g
+BOT_MEMORY=2g
 BOT_CPUS=1
 ENV
 fi
 DOMAIN=$(grep '^DOMAIN=' .env | cut -d= -f2)
 DOMAIN2=$(grep '^DOMAIN2=' .env | cut -d= -f2)
 
-say "Preparo il mini PC dei bot (qualche minuto la prima volta)"
+say "Preparo il mini PC dei bot con desktop e Chromium (10-15 minuti la prima volta)"
 sudo docker build -q -t botlab-sandbox ./sandbox >/dev/null
 
 say "Avvio BotLab"

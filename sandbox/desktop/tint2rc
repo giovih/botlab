@@ -1,0 +1,38 @@
+# Barra in basso: Chromium, terminale, finestre aperte, orologio
+panel_items = LTC
+panel_size = 100% 44
+panel_position = bottom center horizontal
+panel_background_id = 1
+panel_padding = 8 4 8
+font_shadow = 0
+rounded = 0
+border_width = 0
+background_color = #111827 92
+border_color = #000000 0
+
+rounded = 6
+border_width = 0
+background_color = #374151 100
+border_color = #000000 0
+
+launcher_padding = 4 4 6
+launcher_background_id = 0
+launcher_icon_size = 30
+launcher_item_app = /usr/share/applications/chromium.desktop
+launcher_item_app = /usr/share/applications/debian-xterm.desktop
+
+taskbar_mode = single_desktop
+taskbar_padding = 6 2 6
+taskbar_background_id = 0
+task_icon = 1
+task_text = 1
+task_maximum_size = 220 34
+task_padding = 6 4 6
+task_font_color = #e5e7eb 100
+task_active_font_color = #ffffff 100
+task_background_id = 0
+task_active_background_id = 2
+
+time1_format = %H:%M
+clock_font_color = #e5e7eb 100
+clock_padding = 8 0

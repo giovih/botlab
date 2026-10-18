@@ -1,11 +1,11 @@
 # 🤖 BotLab
 
-Crea bot AI (Gemini) che hanno **ognuno il proprio computer Linux**: possono fare ricerche sul web
-ed eseguire comandi nel terminale. Tutto **gratis**: Oracle Cloud Free + Gemini free tier.
+Crea bot AI (Gemini) che hanno **ognuno il proprio computer**, con desktop e browser Chromium che puoi
+**guardare in diretta**: cercano sul web, navigano i siti come una persona ed eseguono comandi nel terminale. Tutto **gratis**: Oracle Cloud Free + Gemini free tier.
 
 ## Cosa c'è dentro
 - `server/` – il cervello: collega Gemini agli strumenti (terminale, ricerca, pagine web) e mostra l'app.
-- `sandbox/` – il "mini PC" di ogni bot (Ubuntu in un container Docker isolato, 1 GB RAM / 1 CPU).
+- `sandbox/` – il "mini PC" di ogni bot: Ubuntu con desktop, Chromium e terminale, in un container Docker isolato (2 GB RAM / 1 CPU).
 - `searxng/` – motore di ricerca privato e gratuito usato dai bot.
 - Caddy – HTTPS automatico e gratuito con un indirizzo tipo `https://1-2-3-4.sslip.io`.
 
@@ -42,7 +42,7 @@ ed eseguire comandi nel terminale. Tutto **gratis**: Oracle Cloud Free + Gemini 
    ```
    curl -fsSL https://raw.githubusercontent.com/giovih/botlab/main/install.sh | bash
    ```
-4. Ti chiede la **chiave Gemini** e una **password** a tua scelta (senza spazi). Ci mette 5–10 minuti.
+4. Ti chiede la **chiave Gemini** e una **password** a tua scelta (senza spazi). Ci mette 15–20 minuti la prima volta.
    Alla fine ti scrive l'indirizzo, tipo `https://123-45-67-89.sslip.io` (oppure `…nip.io`).
    **Aprilo dal telefono**, metti la password, fatto!
    (Su iPhone: Condividi → *Aggiungi a Home* per averla come app.)
@@ -61,9 +61,12 @@ ed eseguire comandi nel terminale. Tutto **gratis**: Oracle Cloud Free + Gemini 
 - **+ Nuovo** → dai un nome e (se vuoi) una personalità, es. *"Sei un esperto di Python"*.
 - Scrivi al bot: *"Cerca le ultime notizie su SpaceX e salvale in un file"*, *"Installa ffmpeg e dimmi la versione"*…
   Vedrai in nero ogni comando che esegue e ogni ricerca che fa (toccali per vedere l'output).
-- Il pulsante **🖥️ PC** apre il computer del bot: vedi **cosa sta facendo in quel momento** (si aggiorna da solo
-  ogni 3 secondi), quanta memoria e processore usa, i **programmi accesi**, le **ultime azioni** e tutti i
-  **file** che ha creato (toccali per leggerli).
+- Il pulsante **🖥️ PC** apre il computer del bot:
+  - **Schermo in diretta**: vedi il desktop del bot mentre apre Chromium, clicca e scrive, come una persona.
+    **⛶ Ingrandisci** lo mostra a tutto schermo; **🖱️ Prendi il controllo** ti fa usare mouse e tastiera tu.
+  - **Sta facendo**: il comando o l'azione di quel momento (si aggiorna da solo ogni 3 secondi).
+  - Processore e memoria usati, **programmi accesi**, **ultime azioni** e tutti i **file** creati (toccali per leggerli).
+- Per far usare il browser al bot basta chiederlo, ad esempio: *"Apri il browser, vai su wikipedia.it e cerca Roma"*.
 - Il pulsante **💬 Chat / ⌨️ Terminale** ti fa usare direttamente il terminale del bot.
 - 🧹 cancella la conversazione (i file restano), 🗑 elimina il bot e il suo computer.
 
