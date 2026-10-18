@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BotLab</title>
+<meta name="theme-color" content="#0c0f0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BotLab">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🤖%3C/text%3E%3C/svg%3E">
+<style>
+:root {
+  --sfondo: #f6f5f1; --carta: #fff; --carta2: #efede7; --testo: #15171a; --tenue: #7b8089;
+  --bordo: rgba(20,23,26,.1); --accento: #3b6ef5; --rosso: #e5484d; --term: #0d1117; --term-testo: #c9d1d9;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --sfondo: #0c0f0d; --carta: #171b19; --carta2: #1f2421; --testo: #f2f4f3; --tenue: #8a918d; --bordo: rgba(255,255,255,.1); }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--sfondo); color: var(--testo); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; border-radius: 10px; padding: 9px 14px; background: var(--carta2); }
+button.primario { background: var(--accento); color: #fff; font-weight: 600; }
+button.pericolo { color: var(--rosso); }
+input, textarea { font-size: 16px; width: 100%; border: 1px solid var(--bordo); background: var(--carta); border-radius: 10px; padding: 10px 12px; }
+textarea { resize: vertical; }
+.nascosto { display: none !important; }
+
+#login { max-width: 380px; margin: 12vh auto; padding: 24px 16px; display: grid; gap: 12px; }
+#login h1 { margin: 0 0 4px; }
+.errore { color: var(--rosso); min-height: 1.2em; font-size: 14px; }
+
+#app { display: grid; grid-template-columns: 260px 1fr; height: 100dvh; }
+#lista { border-right: 1px solid var(--bordo); display: flex; flex-direction: column; background: var(--carta); min-height: 0; }
+#lista header { padding: 14px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 18px; }
+#bots { overflow-y: auto; flex: 1; padding: 0 8px; }
+.bot { display: block; width: 100%; text-align: left; background: none; padding: 10px 12px; margin-bottom: 2px; }
+.bot.attivo { background: var(--carta2); }
+.bot small { display: block; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#esci { margin: 8px; background: none; color: var(--tenue); }
+
+#chat { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+#chat header { padding: 10px 14px; border-bottom: 1px solid var(--bordo); display: flex; gap: 8px; align-items: center; }
+#chat header h2 { margin: 0; font-size: 17px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#indietro { display: none; }
+#messaggi { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; overflow-wrap: anywhere; }
+.msg.user { align-self: flex-end; background: var(--accento); color: #fff; white-space: pre-wrap; }
+.msg.text { align-self: flex-start; background: var(--carta); border: 1px solid var(--bordo); }
+.msg.text pre { background: var(--term); color: var(--term-testo); padding: 10px; border-radius: 8px; overflow-x: auto; }
+.msg.text code { font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+.msg.errore { align-self: center; color: var(--rosso); }
+details.tool { align-self: flex-start; max-width: 95%; width: 100%; background: var(--term); color: var(--term-testo); border-radius: 10px; font: 13px/1.4 ui-monospace, Menlo, monospace; }
+details.tool summary { padding: 8px 12px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+details.tool pre { margin: 0; padding: 0 12px 10px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 400px; overflow-y: auto; }
+.vuoto { margin: auto; color: var(--tenue); text-align: center; padding: 20px; }
+.lavora { align-self: flex-start; color: var(--tenue); font-style: italic; }
+#form { display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--bordo); }
+#form textarea { max-height: 160px; }
+#modo { white-space: nowrap; }
+#form.terminale textarea { font-family: ui-monospace, Menlo, monospace; background: var(--term); color: var(--term-testo); }
+
+dialog { border: 0; border-radius: 16px; background: var(--carta); color: var(--testo); width: min(460px, calc(100% - 32px)); padding: 20px; }
+dialog::backdrop { background: rgba(0,0,0,.4); }
+dialog form { display: grid; gap: 10px; }
+dialog .azioni { display: flex; justify-content: flex-end; gap: 8px; }
+
+@media (max-width: 700px) {
+  #app { grid-template-columns: 1fr; }
+  #app.in-chat #lista { display: none; }
+  #app:not(.in-chat) #chat { display: none; }
+  #indietro { display: inline-block; }
+}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <h1>🤖 BotLab</h1>
+  <p style="margin:0;color:var(--tenue)">Bot AI con il loro computer personale.</p>
+  <label id="riga-server">Indirizzo del server<input id="server" placeholder="https://123-45-67-89.sslip.io" autocomplete="url"></label>
+  <label>Password<input id="password" type="password" autocomplete="current-password"></label>
+  <button class="primario" id="entra">Entra</button>
+  <div class="errore" id="login-errore"></div>
+</div>
+
+<div id="app" class="nascosto">
+  <aside id="lista">
+    <header>I miei bot <button class="primario" id="nuovo">+ Nuovo</button></header>
+    <div id="bots"></div>
+    <button id="esci">Esci</button>
+  </aside>
+  <section id="chat">
+    <header>
+      <button id="indietro">‹</button>
+      <h2 id="titolo">Scegli un bot</h2>
+      <button id="pulisci" title="Cancella la conversazione">🧹</button>
+      <button id="elimina" class="pericolo" title="Elimina il bot">🗑</button>
+    </header>
+    <div id="messaggi"><div class="vuoto">Crea un bot con “+ Nuovo” per iniziare.</div></div>
+    <form id="form">
+      <button type="button" id="modo" title="Passa da chat a terminale">💬 Chat</button>
+      <textarea id="testo" rows="1" placeholder="Scrivi al bot…"></textarea>
+      <button class="primario" id="invia">➤</button>
+    </form>
+  </section>
+</div>
+
+<dialog id="dialogo">
+  <form method="dialog" id="form-bot">
+    <h3 style="margin:0">Nuovo bot</h3>
+    <label>Nome<input id="nome-bot" required maxlength="60" placeholder="Es. Ricercatore"></label>
+    <label>Personalità e istruzioni (facoltativo)
+      <textarea id="istr-bot" rows="5" placeholder="Es. Sei un esperto di programmazione Python. Rispondi in modo breve."></textarea>
+    </label>
+    <div class="azioni"><button value="annulla" formnovalidate>Annulla</button><button class="primario" value="ok">Crea</button></div>
+  </form>
+</dialog>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const servitoDalServer = !location.hostname.endsWith("github.io");
+let cfg = {};
+try { cfg = JSON.parse(localStorage.getItem("botlab") || "{}"); } catch {}
+const base = () => (servitoDalServer ? location.origin : (cfg.server || "").replace(/\/+$/, ""));
+let bots = [], attuale = null, modoTerminale = false, occupato = false;
+
+async function api(path, opts = {}) {
+  const res = await fetch(base() + path, {
+    ...opts,
+    headers: { "Authorization": "Bearer " + (cfg.password || ""), "Content-Type": "application/json", ...(opts.headers || {}) },
+  });
+  if (!res.ok) {
+    let e; try { e = (await res.json()).error; } catch {}
+    if (res.status === 401 || res.status === 403) esci();
+    throw new Error(e || "Errore " + res.status);
+  }
+  return res;
+}
+
+// ---------- accesso ----------
+if (servitoDalServer) $("#riga-server").classList.add("nascosto");
+$("#server").value = cfg.server || "";
+$("#entra").onclick = async () => {
+  cfg = { server: $("#server").value.trim(), password: $("#password").value };
+  $("#login-errore").textContent = "";
+  try {
+    await api("/api/ping");
+    try { localStorage.setItem("botlab", JSON.stringify(cfg)); } catch {}
+    avvia();
+  } catch (e) { $("#login-errore").textContent = e.message === "Failed to fetch" ? "Server non raggiungibile" : e.message; }
+};
+$("#password").onkeydown = (e) => { if (e.key === "Enter") $("#entra").click(); };
+function esci() {
+  try { localStorage.removeItem("botlab"); } catch {}
+  cfg = { server: cfg.server };
+  $("#app").classList.add("nascosto"); $("#login").classList.remove("nascosto");
+}
+$("#esci").onclick = esci;
+
+async function avvia() {
+  $("#login").classList.add("nascosto"); $("#app").classList.remove("nascosto");
+  await caricaBot();
+}
+
+// ---------- bot ----------
+async function caricaBot() {
+  bots = await (await api("/api/bots")).json();
+  const box = $("#bots"); box.innerHTML = "";
+  for (const b of bots) {
+    const el = document.createElement("button");
+    el.className = "bot" + (attuale?.id === b.id ? " attivo" : "");
+    el.innerHTML = `<b></b><small></small>`;
+    el.querySelector("b").textContent = b.name;
+    el.querySelector("small").textContent = b.instructions || "Nessuna istruzione";
+    el.onclick = () => apri(b);
+    box.appendChild(el);
+  }
+  if (!bots.length) box.innerHTML = `<p class="vuoto">Ancora nessun bot.</p>`;
+}
+
+$("#nuovo").onclick = () => { $("#form-bot").reset(); $("#dialogo").showModal(); };
+$("#dialogo").onclose = async () => {
+  if ($("#dialogo").returnValue !== "ok") return;
+  try {
+    const b = await (await api("/api/bots", { method: "POST", body: JSON.stringify({ name: $("#nome-bot").value, instructions: $("#istr-bot").value }) })).json();
+    await caricaBot(); apri(b);
+  } catch (e) { alert(e.message); }
+};
+
+async function apri(b) {
+  attuale = b;
+  $("#titolo").textContent = b.name;
+  $("#app").classList.add("in-chat");
+  document.querySelectorAll(".bot").forEach((el, i) => el.classList.toggle("attivo", bots[i]?.id === b.id));
+  const box = $("#messaggi"); box.innerHTML = "";
+  const msgs = await (await api(`/api/bots/${b.id}/messages`)).json();
+  if (!msgs.length) box.innerHTML = `<div class="vuoto">Il computer di <b></b> è pronto.<br>Chiedigli qualcosa, ad esempio:<br>“Cerca le notizie di oggi sull'AI e riassumile”</div>`, box.querySelector("b").textContent = b.name;
+  let ultimoTool = null;
+  for (const m of msgs) ultimoTool = mostra(m, ultimoTool);
+  scorri();
+}
+$("#indietro").onclick = () => $("#app").classList.remove("in-chat");
+$("#elimina").onclick = async () => {
+  if (!attuale || !confirm(`Eliminare "${attuale.name}" e il suo computer? Non si può annullare.`)) return;
+  await api(`/api/bots/${attuale.id}`, { method: "DELETE" });
+  attuale = null; $("#titolo").textContent = "Scegli un bot"; $("#messaggi").innerHTML = "";
+  $("#app").classList.remove("in-chat"); caricaBot();
+};
+$("#pulisci").onclick = async () => {
+  if (!attuale || !confirm("Cancellare la conversazione? (i file sul computer del bot restano)")) return;
+  await api(`/api/bots/${attuale.id}/reset`, { method: "POST" }); apri(attuale);
+};
+
+// ---------- messaggi ----------
+function esc(s) { return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function markdown(t) {
+  const blocchi = [];
+  t = esc(t).replace(/```[\w-]*\n?([\s\S]*?)```/g, (_, c) => (blocchi.push(`<pre><code>${c}</code></pre>`), `\u0000${blocchi.length - 1}\u0000`));
+  t = t.replace(/`([^`\n]+)`/g, "<code>$1</code>")
+       .replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>")
+       .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<i>$2</i>")
+       .replace(/^#{1,6} (.*)$/gm, "<b>$1</b>")
+       .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+       .replace(/\n/g, "<br>");
+  return t.replace(/\u0000(\d+)\u0000/g, (_, i) => blocchi[i]);
+}
+function descriviTool(m) {
+  if (m.name === "run_command") return "$ " + (m.args.command || "");
+  if (m.name === "web_search") return "🔎 " + (m.args.query || "");
+  if (m.name === "fetch_url") return "🌐 " + (m.args.url || "");
+  return m.name;
+}
+function testoRisultato(r) {
+  if (!r) return "";
+  if (r.error) return "Errore: " + r.error;
+  if ("stdout" in r) return (r.stdout || "") + (r.stderr ? "\n" + r.stderr : "") + (r.exit_code ? `\n[uscita ${r.exit_code}]` : "") || "(nessun output)";
+  if (r.results) return r.results.map((x) => `• ${x.title}\n  ${x.url}\n  ${x.snippet}`).join("\n\n") || "Nessun risultato";
+  if ("text" in r) return r.text;
+  return JSON.stringify(r, null, 2);
+}
+function mostra(m, ultimoTool) {
+  const box = $("#messaggi");
+  box.querySelector(".vuoto")?.remove();
+  if (m.type === "tool") {
+    const d = document.createElement("details"); d.className = "tool";
+    d.innerHTML = `<summary></summary><pre>…</pre>`;
+    d.querySelector("summary").textContent = descriviTool(m);
+    box.appendChild(d); return d;
+  }
+  if (m.type === "tool_result") {
+    if (ultimoTool) ultimoTool.querySelector("pre").textContent = testoRisultato(m.result);
+    return null;
+  }
+  const el = document.createElement("div");
+  el.className = "msg " + (m.type === "error" ? "errore" : m.type);
+  if (m.type === "text") el.innerHTML = markdown(m.text);
+  else el.textContent = m.type === "error" ? "⚠️ " + m.error : m.text;
+  box.appendChild(el);
+  return ultimoTool;
+}
+const scorri = () => { const b = $("#messaggi"); b.scrollTop = b.scrollHeight; };
+
+// ---------- invio ----------
+$("#modo").onclick = () => {
+  modoTerminale = !modoTerminale;
+  $("#modo").textContent = modoTerminale ? "⌨️ Terminale" : "💬 Chat";
+  $("#form").classList.toggle("terminale", modoTerminale);
+  $("#testo").placeholder = modoTerminale ? "Comando da eseguire sul computer del bot…" : "Scrivi al bot…";
+  $("#testo").focus();
+};
+$("#testo").addEventListener("input", (e) => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; });
+$("#testo").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && !matchMedia("(pointer: coarse)").matches) { e.preventDefault(); $("#form").requestSubmit(); }
+});
+$("#form").onsubmit = async (e) => {
+  e.preventDefault();
+  const testo = $("#testo").value.trim();
+  if (!testo || !attuale || occupato) return;
+  $("#testo").value = ""; $("#testo").style.height = "auto";
+  occupato = true; $("#invia").disabled = true;
+  const botId = attuale.id;
+  const visibile = () => attuale?.id === botId; // l'utente potrebbe aprire un altro bot nel frattempo
+  try {
+    if (modoTerminale) {
+      const t = mostra({ type: "tool", name: "run_command", args: { command: testo } });
+      t.open = true; scorri();
+      const r = await (await api(`/api/bots/${attuale.id}/exec`, { method: "POST", body: JSON.stringify({ command: testo }) })).json();
+      if (visibile()) mostra({ type: "tool_result", result: r }, t);
+    } else {
+      mostra({ type: "user", text: testo });
+      const att = document.createElement("div"); att.className = "lavora"; att.textContent = "Sta lavorando…";
+      $("#messaggi").appendChild(att); scorri();
+      const res = await api(`/api/bots/${attuale.id}/chat`, { method: "POST", body: JSON.stringify({ text: testo }) });
+      const reader = res.body.getReader(); const dec = new TextDecoder();
+      let buf = "", ultimoTool = null;
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let i;
+        while ((i = buf.indexOf("\n")) >= 0) {
+          const riga = buf.slice(0, i); buf = buf.slice(i + 1);
+          if (!riga) continue;
+          const ev = JSON.parse(riga);
+          if (ev.type === "done") continue;
+          if (!visibile()) continue;
+          ultimoTool = mostra(ev, ultimoTool);
+          $("#messaggi").appendChild(att); scorri();
+        }
+      }
+      att.remove();
+    }
+  } catch (err) {
+    document.querySelector(".lavora")?.remove();
+    if (visibile()) mostra({ type: "error", error: err.message });
+  } finally {
+    occupato = false; $("#invia").disabled = false; scorri();
+  }
+};
+
+if (cfg.password) api("/api/ping").then(avvia).catch(() => {});
+</script>
+</body>
+</html>

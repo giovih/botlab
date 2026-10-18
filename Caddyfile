@@ -1,0 +1,6 @@
+# Due indirizzi gratuiti: se uno non riesce ad avere il certificato HTTPS, funziona l'altro.
+{$DOMAIN}, {$DOMAIN2} {
+	reverse_proxy server:8080 {
+		flush_interval -1
+	}
+}

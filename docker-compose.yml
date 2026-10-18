@@ -1,0 +1,33 @@
+services:
+  server:
+    build: ./server
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SEARX_URL: http://searxng:8080
+      DATA_DIR: /data
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/data
+    depends_on: [searxng]
+
+  searxng:
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    environment:
+      GRANIAN_HOST: 0.0.0.0
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+
+  # HTTPS automatico gratuito (Let's Encrypt)
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./data/caddy:/data
+    depends_on: [server]
