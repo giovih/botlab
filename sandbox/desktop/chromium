@@ -1,0 +1,10 @@
+#!/bin/sh
+# Avvia Chromium sullo schermo del bot (se è già aperto, apre una nuova scheda).
+BIN=$(ls -d /opt/pw-browsers/chromium-*/chrome-linux*/chrome 2>/dev/null | sort -V | tail -1)
+[ -x "$BIN" ] || { echo "Chromium non è installato" >&2; exit 1; }
+export DISPLAY="${DISPLAY:-:1}"
+# niente avvisi "chiavi Google mancanti", interfaccia in italiano
+export GOOGLE_API_KEY=no GOOGLE_DEFAULT_CLIENT_ID=no GOOGLE_DEFAULT_CLIENT_SECRET=no LANGUAGE=it
+exec "$BIN" --no-sandbox --test-type --disable-dev-shm-usage --no-first-run --no-default-browser-check \
+  --password-store=basic --disable-gpu --start-maximized --user-data-dir=/root/.config/chromium \
+  --lang=it "$@"

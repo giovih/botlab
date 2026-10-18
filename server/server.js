@@ -3,7 +3,7 @@ import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 
 const PORT = Number(process.env.PORT || 8080);
 const PASSWORD = process.env.BOTLAB_PASSWORD || "";
@@ -18,6 +18,7 @@ const DATA_DIR = process.env.DATA_DIR || "./data";
 const SANDBOX_IMAGE = process.env.SANDBOX_IMAGE || "botlab-sandbox";
 const MAX_STEPS = Number(process.env.MAX_STEPS || 15);
 const PUBLIC_DIR = path.join(path.dirname(new URL(import.meta.url).pathname), "public");
+const NOVNC_DIR = process.env.NOVNC_DIR || "/app/novnc"; // visore dello schermo (copiato dal mini PC)
 
 const BOTS_FILE = path.join(DATA_DIR, "bots.json");
 const HIST_DIR = path.join(DATA_DIR, "history");
@@ -71,7 +72,8 @@ async function ensureContainer(id) {
   }
   const r = await run("docker", [
     "run", "-d", "--name", name, "--hostname", `bot-${id.slice(0, 6)}`,
-    "--memory", process.env.BOT_MEMORY || "1g",
+    "--memory", process.env.BOT_MEMORY || "2g",
+    "--shm-size", "512m", // Chromium ha bisogno di memoria condivisa
     "--cpus", process.env.BOT_CPUS || "1",
     "--pids-limit", "256",
     "--restart", "unless-stopped",
@@ -80,6 +82,7 @@ async function ensureContainer(id) {
     // DNS pubblici: così i bot non usano il DNS interno di Oracle (che è bloccato per loro)
     ...(process.env.BOT_DNS || "1.1.1.1,8.8.8.8").split(",").flatMap((d) => ["--dns", d.trim()]),
     "--security-opt", "no-new-privileges",
+    ...(process.env.BOT_DOCKER_ARGS || "").split(" ").filter(Boolean),
     SANDBOX_IMAGE,
   ]);
   if (r.code !== 0) throw new Error("Impossibile creare il mini PC: " + r.stderr);
@@ -132,6 +135,35 @@ const tools = [{
         type: "object",
         properties: { url: { type: "string" } },
         required: ["url"],
+      },
+    },
+    {
+      name: "apri_browser",
+      description: "Apre Chromium sul tuo schermo (visibile in diretta all'utente) all'indirizzo indicato. Se è già aperto apre una nuova scheda. Restituisce una foto dello schermo.",
+      parameters: {
+        type: "object",
+        properties: { url: { type: "string", description: "Indirizzo da aprire, es. https://www.google.com" } },
+      },
+    },
+    {
+      name: "guarda_schermo",
+      description: "Fa una foto del tuo schermo (1280x800) per vedere cosa c'è.",
+      parameters: { type: "object", properties: {} },
+    },
+    {
+      name: "usa_computer",
+      description: "Usa mouse e tastiera sul tuo schermo. Le coordinate x,y sono in pixel della foto dello schermo (0,0 = in alto a sinistra, max 1280x800). Dopo l'azione ricevi una nuova foto dello schermo.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: { type: "string", enum: ["click", "double_click", "right_click", "move", "type", "key", "scroll", "wait"], description: "click/double_click/right_click/move usano x,y; type scrive 'text'; key preme tasti in 'text' (es. 'Return', 'ctrl+l', 'ctrl+t', 'Tab'); scroll usa direction e amount; wait aspetta 'amount' secondi" },
+          x: { type: "integer" },
+          y: { type: "integer" },
+          text: { type: "string" },
+          direction: { type: "string", enum: ["up", "down"] },
+          amount: { type: "integer" },
+        },
+        required: ["action"],
       },
     },
   ],
@@ -188,11 +220,59 @@ async function fetchUrl(url) {
   return { status: res.status, text: clip(type.includes("html") ? htmlToText(body) : body, 12000) };
 }
 
+// ---------- schermo del bot (desktop con Chromium) ----------
+const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
+const xdo = (id, ...args) => run("docker", ["exec", containerName(id), "xdotool", ...args], { timeout: 30000 });
+
+async function fotoSchermo(id) {
+  await ensureContainer(id);
+  const r = await run("docker", ["exec", containerName(id), "sh", "-c", "scrot -o -q 60 /tmp/schermo.jpg && base64 -w0 /tmp/schermo.jpg"], { timeout: 20000 });
+  if (r.code !== 0 || !r.stdout.trim()) throw new Error("impossibile fotografare lo schermo " + r.stderr.trim());
+  return r.stdout.trim();
+}
+
+async function apriBrowser(id, url) {
+  await ensureContainer(id);
+  url = String(url || "").trim();
+  if (url && !/^(https?|about|data|file):/i.test(url)) url = "https://" + url;
+  const r = await run("docker", ["exec", "-d", containerName(id), "chromium", ...(url ? [url] : [])]);
+  if (r.code !== 0) return { error: "impossibile aprire il browser: " + r.stderr.trim() };
+  await pausa(4000);
+  return { ok: true, url, _foto: await fotoSchermo(id) };
+}
+
+async function usaComputer(id, a) {
+  await ensureContainer(id);
+  const x = Math.round(Number(a.x)), y = Math.round(Number(a.y));
+  const punto = Number.isFinite(x) && Number.isFinite(y) ? ["mousemove", String(x), String(y)] : [];
+  const quanti = String(Math.min(Math.max(Math.round(Number(a.amount)) || 5, 1), 30));
+  let r;
+  switch (a.action) {
+    case "click": r = await xdo(id, ...punto, "click", "1"); break;
+    case "double_click": r = await xdo(id, ...punto, "click", "--repeat", "2", "1"); break;
+    case "right_click": r = await xdo(id, ...punto, "click", "3"); break;
+    case "move":
+      if (!punto.length) return { error: "servono x e y" };
+      r = await xdo(id, ...punto); break;
+    case "type": r = await xdo(id, "type", "--delay", "20", "--", String(a.text ?? "")); break;
+    case "key": r = await xdo(id, "key", "--", ...String(a.text || "").split(/\s+/).filter(Boolean)); break;
+    case "scroll": r = await xdo(id, ...punto, "click", "--repeat", quanti, a.direction === "up" ? "4" : "5"); break;
+    case "wait": await pausa(Math.min(Number(quanti), 15) * 1000); break;
+    default: return { error: "azione sconosciuta: " + a.action };
+  }
+  if (r && r.code !== 0) return { error: r.stderr.trim() || "azione non riuscita" };
+  await pausa(1200);
+  return { ok: true, _foto: await fotoSchermo(id) };
+}
+
 async function callTool(botId, name, args) {
   try {
     if (name === "run_command") return await execInBot(botId, String(args.command || ""), Number(args.timeout_seconds) || 60);
     if (name === "web_search") return await webSearch(String(args.query || ""));
     if (name === "fetch_url") return await fetchUrl(String(args.url || ""));
+    if (name === "apri_browser") return await apriBrowser(botId, args.url);
+    if (name === "guarda_schermo") return { ok: true, _foto: await fotoSchermo(botId) };
+    if (name === "usa_computer") return await usaComputer(botId, args);
     return { error: "strumento sconosciuto" };
   } catch (e) {
     return { error: String(e.message || e) };
@@ -204,6 +284,10 @@ function systemPrompt(bot) {
   return [
     `Sei "${bot.name}", un assistente AI con un tuo computer Linux personale.`,
     "Usa gli strumenti quando servono: run_command per il terminale, web_search e fetch_url per le ricerche.",
+    "Hai anche uno schermo 1280x800 con un desktop e il browser Chromium, che l'utente può guardare in diretta.",
+    "Per usare i siti come una persona (cliccare, compilare moduli, guardare pagine) usa apri_browser, usa_computer e guarda_schermo:",
+    "dopo ogni azione ricevi una foto dello schermo; le coordinate x,y sono i pixel della foto. Per leggere solo il testo di una pagina fetch_url è più veloce.",
+    "I programmi grafici avviati con run_command compaiono sullo schermo; avviali in background (con &) così il comando non resta bloccato.",
     "Lavora passo per passo, controlla i risultati e alla fine rispondi in modo chiaro. Rispondi nella lingua dell'utente.",
     bot.instructions ? `\nIstruzioni del tuo creatore:\n${bot.instructions}` : "",
   ].join("\n");
@@ -233,6 +317,16 @@ async function geminiCall(model, bot, contents) {
       throw new Error("Gemini non ha risposto (" + (cand?.finishReason || data.promptFeedback?.blockReason || "sconosciuto") + ")");
     }
     return { content: cand.content };
+  }
+}
+
+// Le foto dello schermo pesano: nella cronologia tengo solo le ultime
+function togliVecchieFoto(history, tieni = 2) {
+  let viste = 0;
+  for (let i = history.length - 1; i >= 0; i--) {
+    const parts = history[i].parts || [];
+    if (!parts.some((p) => p.inlineData)) continue;
+    if (++viste > tieni) history[i].parts = parts.filter((p) => !p.inlineData);
   }
 }
 
@@ -287,7 +381,16 @@ async function statoPc(id) {
     .map((l) => l.trim().split(/\s+/))
     .map(([pid, tempo, cpu, mem, ...cmd]) => ({ pid, tempo, cpu, mem, cmd: cmd.join(" ") }))
     .filter((p) => p.cmd && !/^(sleep infinity|ps -eo|runc|timeout -k 5 |du -sh|find \/root|\[)/.test(p.cmd))
-    .slice(0, 20);
+    .slice(0, 40);
+  // Chromium apre tanti processi con percorsi lunghissimi: li raggruppo in una riga sola
+  const chrome = processi.filter((p) => /\/chrome(\s|$)/.test(p.cmd));
+  if (chrome.length) {
+    const cpu = chrome.reduce((t, p) => t + Number(p.cpu || 0), 0).toFixed(1);
+    const mem = chrome.reduce((t, p) => t + Number(p.mem || 0), 0).toFixed(1);
+    processi.splice(processi.indexOf(chrome[0]), 0, { pid: chrome[0].pid, tempo: chrome[0].tempo, cpu, mem, cmd: `Chromium (${chrome.length} processi)` });
+  }
+  const visibili = processi.filter((p) => !chrome.includes(p)).slice(0, 15)
+    .map((p) => ({ ...p, cmd: p.cmd.replace(/^\/usr\/bin\/python3 \/usr\/bin\/websockify.*/, "schermo in diretta (websockify)") }));
   const elenco = files.stdout.split("\n").filter(Boolean).slice(0, 400).map((l) => {
     const [tipo, size, data, ...p] = l.split("\t");
     return { dir: tipo === "d", size: Number(size), data, path: p.join("\t") };
@@ -298,7 +401,7 @@ async function statoPc(id) {
     cpu: cpu || "?", memoria: mem || "?", memoriaPerc: memPerc || "?",
     disco: (disco.stdout.split("\t")[0] || "?").trim(),
     lavora: busy.has(id), ora: a.ora, storico: a.storico,
-    processi, file: elenco,
+    processi: visibili, file: elenco,
   };
 }
 
@@ -324,15 +427,20 @@ async function chat(bot, text, emit) {
     const calls = content.parts.filter((p) => p.functionCall);
     for (const p of content.parts) if (p.text && !p.thought) emit({ type: "text", text: p.text });
     if (!calls.length) return;
-    const responses = [];
+    const responses = [], foto = [];
     for (const { functionCall: fc } of calls) {
       emit({ type: "tool", name: fc.name, args: fc.args || {} });
       segnaAttivita(bot.id, fc.name, fc.args || {});
       const result = await callTool(bot.id, fc.name, fc.args || {}).finally(() => segnaAttivita(bot.id, null));
-      emit({ type: "tool_result", name: fc.name, result });
-      responses.push({ functionResponse: { name: fc.name, response: result } });
+      const { _foto, ...risposta } = result;
+      if (_foto) { risposta.foto = "foto dello schermo allegata"; foto.push(_foto); }
+      emit({ type: "tool_result", name: fc.name, result: risposta });
+      responses.push({ functionResponse: { name: fc.name, response: risposta } });
     }
+    // le foto dello schermo vanno a Gemini come immagini, dopo le risposte degli strumenti
+    for (const data of foto.splice(0)) responses.push({ inlineData: { mimeType: "image/jpeg", data } });
     history.push({ role: "user", parts: responses });
+    togliVecchieFoto(history);
     await saveHistory(bot.id, history);
   }
   emit({ type: "text", text: "_(Mi fermo qui: troppi passaggi di fila. Scrivimi \"continua\" per proseguire.)_" });
@@ -352,7 +460,7 @@ function toUi(history) {
 }
 
 // ---------- HTTP ----------
-const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".json": "application/json", ".webmanifest": "application/manifest+json" };
+const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".json": "application/json", ".webmanifest": "application/manifest+json" };
 
 function send(res, status, body) {
   res.writeHead(status, { "Content-Type": "application/json" });
@@ -383,9 +491,11 @@ function authorized(req) {
 }
 
 async function serveStatic(req, res) {
-  const rel = decodeURIComponent(new URL(req.url, "http://x").pathname);
-  const file = path.join(PUBLIC_DIR, rel === "/" ? "index.html" : rel);
-  if (!file.startsWith(PUBLIC_DIR)) return send(res, 403, { error: "no" });
+  let rel = decodeURIComponent(new URL(req.url, "http://x").pathname);
+  let base = PUBLIC_DIR;
+  if (rel.startsWith("/novnc/")) { base = NOVNC_DIR; rel = rel.slice("/novnc".length); }
+  const file = path.join(base, rel === "/" ? "index.html" : rel);
+  if (!file.startsWith(base + path.sep)) return send(res, 403, { error: "no" });
   try {
     const data = await fs.readFile(file);
     res.writeHead(200, { "Content-Type": MIME[path.extname(file)] || "application/octet-stream" });
@@ -393,6 +503,41 @@ async function serveStatic(req, res) {
   } catch {
     send(res, 404, { error: "non trovato" });
   }
+}
+
+// ---------- schermo in diretta ----------
+// Il browser apre una WebSocket verso /schermo/ws?t=BIGLIETTO; il biglietto si ottiene con la password
+// e viene girato al server VNC dentro il mini PC del bot (passando da "docker exec", niente porte aperte).
+const biglietti = new Map(); // biglietto -> { id, scade }
+function nuovoBiglietto(id) {
+  for (const [t, b] of biglietti) if (b.scade < Date.now()) biglietti.delete(t);
+  const t = crypto.randomBytes(24).toString("hex");
+  biglietti.set(t, { id, scade: Date.now() + 12 * 3600 * 1000 });
+  return t;
+}
+
+function collegaSchermo(req, socket, head) {
+  const url = new URL(req.url, "http://x");
+  const b = biglietti.get(url.searchParams.get("t") || "");
+  if (url.pathname !== "/schermo/ws" || !b || b.scade < Date.now()) {
+    socket.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
+    return;
+  }
+  ensureContainer(b.id).then(() => {
+    const child = spawn("docker", ["exec", "-i", containerName(b.id), "socat", "STDIO", "TCP:127.0.0.1:6080"]);
+    const righe = [`GET / HTTP/1.1`];
+    for (let i = 0; i < req.rawHeaders.length; i += 2) {
+      if (!/^x-forwarded|^x-real-ip/i.test(req.rawHeaders[i])) righe.push(`${req.rawHeaders[i]}: ${req.rawHeaders[i + 1]}`);
+    }
+    child.stdin.write(righe.join("\r\n") + "\r\n\r\n");
+    if (head?.length) child.stdin.write(head);
+    socket.pipe(child.stdin);
+    child.stdout.pipe(socket);
+    const chiudi = () => { socket.destroy(); child.kill(); };
+    socket.on("close", chiudi).on("error", chiudi);
+    child.on("exit", chiudi);
+    child.stdin.on("error", chiudi);
+  }).catch(() => socket.destroy());
 }
 
 const server = http.createServer(async (req, res) => {
@@ -444,6 +589,7 @@ const server = http.createServer(async (req, res) => {
     const action = parts[3];
 
     if (!action && req.method === "DELETE") {
+      for (const [t, b] of biglietti) if (b.id === bot.id) biglietti.delete(t);
       await run("docker", ["rm", "-f", containerName(bot.id)]);
       await fs.rm(histFile(bot.id), { force: true });
       await saveBots(bots.filter((b) => b.id !== bot.id));
@@ -455,6 +601,10 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
     if (action === "pc" && req.method === "GET") return send(res, 200, await statoPc(bot.id));
+    if (action === "schermo" && req.method === "POST") {
+      await ensureContainer(bot.id);
+      return send(res, 200, { biglietto: nuovoBiglietto(bot.id) });
+    }
     if (action === "file" && req.method === "GET") return send(res, 200, await leggiFile(bot.id, url.searchParams.get("path")));
     if (action === "exec" && req.method === "POST") {
       const { command } = await readBody(req);
@@ -486,4 +636,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (!PASSWORD || !GEMINI_KEY) console.warn("ATTENZIONE: BOTLAB_PASSWORD o GEMINI_API_KEY mancanti nel file .env");
+server.on("upgrade", collegaSchermo);
 server.listen(PORT, () => console.log(`BotLab in ascolto sulla porta ${PORT} (modello ${MODEL})`));
