@@ -380,7 +380,7 @@ async function statoPc(id) {
   const processi = ps.stdout.trim().split("\n").slice(1)
     .map((l) => l.trim().split(/\s+/))
     .map(([pid, tempo, cpu, mem, ...cmd]) => ({ pid, tempo, cpu, mem, cmd: cmd.join(" ") }))
-    .filter((p) => p.cmd && !/^(sleep infinity|ps -eo|runc|timeout -k 5 |du -sh|find \/root|\[)/.test(p.cmd))
+    .filter((p) => p.cmd && !/^(sleep infinity|ps -eo|runc|timeout -k 5 |du -sh|find \/root|socat STDIO|\[)/.test(p.cmd))
     .slice(0, 40);
   // Chromium apre tanti processi con percorsi lunghissimi: li raggruppo in una riga sola
   const chrome = processi.filter((p) => /\/chrome(\s|$)/.test(p.cmd));
@@ -543,7 +543,7 @@ function collegaSchermo(req, socket, head) {
 const server = http.createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
   if (req.method === "OPTIONS") return res.end();
 
   const url = new URL(req.url, "http://x");
@@ -569,14 +569,22 @@ const server = http.createServer(async (req, res) => {
     const parts = url.pathname.split("/").filter(Boolean); // api, bots, :id, action
     const bots = await loadBots();
 
+    // aspetto del bot: forma, colore e simbolo (scelti nell'app)
+    const FORME = ["cerchio", "squircle", "quadrato", "esagono", "ottagono", "rombo", "goccia", "foglia"];
+    const pulisciAvatar = (a = {}) => ({
+      forma: FORME.includes(a.forma) ? a.forma : "squircle",
+      colore: /^(#[0-9a-f]{6}|[a-z]{3,12})$/i.test(String(a.colore || "")) ? String(a.colore) : "grafite",
+      simbolo: [...String(a.simbolo ?? "")].slice(0, 2).join(""),
+    });
+
     if (url.pathname === "/api/ping") return send(res, 200, { ok: true, model: MODEL });
 
     if (parts[1] === "bots" && parts.length === 2) {
       if (req.method === "GET") return send(res, 200, bots);
       if (req.method === "POST") {
-        const { name, instructions } = await readBody(req);
+        const { name, instructions, avatar } = await readBody(req);
         if (!name?.trim()) return send(res, 400, { error: "Serve un nome" });
-        const bot = { id: crypto.randomBytes(6).toString("hex"), name: name.trim().slice(0, 60), instructions: String(instructions || "").slice(0, 8000), created: Date.now() };
+        const bot = { id: crypto.randomBytes(6).toString("hex"), name: name.trim().slice(0, 60), instructions: String(instructions || "").slice(0, 8000), avatar: pulisciAvatar(avatar), created: Date.now() };
         bots.push(bot);
         await saveBots(bots);
         ensureContainer(bot.id).catch((e) => console.error(e));
@@ -588,6 +596,17 @@ const server = http.createServer(async (req, res) => {
     if (parts[1] !== "bots" || !bot) return send(res, 404, { error: "Bot non trovato" });
     const action = parts[3];
 
+    if (!action && req.method === "PATCH") {
+      const { name, instructions, avatar } = await readBody(req);
+      if (name !== undefined) {
+        if (!String(name).trim()) return send(res, 400, { error: "Serve un nome" });
+        bot.name = String(name).trim().slice(0, 60);
+      }
+      if (instructions !== undefined) bot.instructions = String(instructions).slice(0, 8000);
+      if (avatar !== undefined) bot.avatar = pulisciAvatar(avatar);
+      await saveBots(bots);
+      return send(res, 200, bot);
+    }
     if (!action && req.method === "DELETE") {
       for (const [t, b] of biglietti) if (b.id === bot.id) biglietti.delete(t);
       await run("docker", ["rm", "-f", containerName(bot.id)]);

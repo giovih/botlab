@@ -58,7 +58,8 @@ Crea bot AI (Gemini) che hanno **ognuno il proprio computer**, con desktop e bro
 ---
 
 ## Come si usa
-- **+ Nuovo** → dai un nome e (se vuoi) una personalità, es. *"Sei un esperto di Python"*.
+- **Nuovo bot** → scegli il suo aspetto (**colore, forma e simbolo**), un nome e, se vuoi, una personalità,
+  es. *"Sei un esperto di Python"*. Con la matita ✏️ in alto puoi cambiarli quando vuoi.
 - Scrivi al bot: *"Cerca le ultime notizie su SpaceX e salvale in un file"*, *"Installa ffmpeg e dimmi la versione"*…
   Vedrai in nero ogni comando che esegue e ogni ricerca che fa (toccali per vedere l'output).
 - Il pulsante **🖥️ PC** apre il computer del bot:
@@ -68,7 +69,7 @@ Crea bot AI (Gemini) che hanno **ognuno il proprio computer**, con desktop e bro
   - Processore e memoria usati, **programmi accesi**, **ultime azioni** e tutti i **file** creati (toccali per leggerli).
 - Per far usare il browser al bot basta chiederlo, ad esempio: *"Apri il browser, vai su wikipedia.it e cerca Roma"*.
 - Il pulsante **💬 Chat / ⌨️ Terminale** ti fa usare direttamente il terminale del bot.
-- 🧹 cancella la conversazione (i file restano), 🗑 elimina il bot e il suo computer.
+- ↺ inizia una nuova conversazione (i file restano), 🗑 elimina il bot e il suo computer.
 
 ## Sicurezza: 5 tentativi
 Se qualcuno sbaglia la password **5 volte**, il suo dispositivo (la sua connessione internet) viene

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Terminale
+Exec=xterm -bg #0e0e10 -fg #e5e5e5 -fa "DejaVu Sans Mono" -fs 11 -bc -cr #fafafa
+Icon=/usr/share/pixmaps/terminale.svg
+Terminal=false
+Categories=System;TerminalEmulator;

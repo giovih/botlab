@@ -7,19 +7,19 @@ panel_padding = 8 4 8
 font_shadow = 0
 rounded = 0
 border_width = 0
-background_color = #111827 92
+background_color = #000000 88
 border_color = #000000 0
 
 rounded = 6
 border_width = 0
-background_color = #374151 100
+background_color = #2a2a2e 100
 border_color = #000000 0
 
 launcher_padding = 4 4 6
 launcher_background_id = 0
 launcher_icon_size = 30
 launcher_item_app = /usr/share/applications/chromium.desktop
-launcher_item_app = /usr/share/applications/debian-xterm.desktop
+launcher_item_app = /usr/share/applications/terminale.desktop
 
 taskbar_mode = single_desktop
 taskbar_padding = 6 2 6
