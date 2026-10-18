@@ -4,197 +4,416 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BotLab</title>
-<meta name="theme-color" content="#0c0f0d">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="BotLab">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🤖%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23000'/%3E%3Cpath d='M32 14l4.2 12.8L49 31l-12.8 4.2L32 48l-4.2-12.8L15 31l12.8-4.2z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <style>
 :root {
-  --sfondo: #f6f5f1; --carta: #fff; --carta2: #efede7; --testo: #15171a; --tenue: #7b8089;
-  --bordo: rgba(20,23,26,.1); --accento: #3b6ef5; --rosso: #e5484d; --term: #0d1117; --term-testo: #c9d1d9;
-  color-scheme: light dark;
-}
-@media (prefers-color-scheme: dark) {
-  :root { --sfondo: #0c0f0d; --carta: #171b19; --carta2: #1f2421; --testo: #f2f4f3; --tenue: #8a918d; --bordo: rgba(255,255,255,.1); }
+  --nero: #000;
+  --fondo: #050505;
+  --sup1: #0d0d0d;
+  --sup2: #151515;
+  --sup3: #1d1d1d;
+  --sup4: #262626;
+  --linea: rgba(255, 255, 255, .07);
+  --linea2: rgba(255, 255, 255, .12);
+  --testo: #f4f4f5;
+  --testo2: #c7c7cc;
+  --tenue: #8a8a90;
+  --spento: #5c5c62;
+  --bianco: #fafafa;
+  --verde: #4ade80;
+  --rosso: #f87171;
+  --font: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --morbido: cubic-bezier(.22, 1, .36, 1);
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
-body { background: var(--sfondo); color: var(--testo); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-button, input, textarea { font: inherit; color: inherit; }
-button { cursor: pointer; border: 0; border-radius: 10px; padding: 9px 14px; background: var(--carta2); }
-button.primario { background: var(--accento); color: #fff; font-weight: 600; }
-button.pericolo { color: var(--rosso); }
-input, textarea { font-size: 16px; width: 100%; border: 1px solid var(--bordo); background: var(--carta); border-radius: 10px; padding: 10px 12px; }
-textarea { resize: vertical; }
+html, body { margin: 0; height: 100%; background: var(--nero); }
+body {
+  color: var(--testo); font: 15px/1.55 var(--font); letter-spacing: -.005em;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
+button { cursor: pointer; border: 0; background: none; padding: 0; }
+::selection { background: rgba(255, 255, 255, .22); }
 .nascosto { display: none !important; }
+svg.i { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
-#login { max-width: 380px; margin: 12vh auto; padding: 24px 16px; display: grid; gap: 12px; }
-#login h1 { margin: 0 0 4px; }
-.errore { color: var(--rosso); min-height: 1.2em; font-size: 14px; }
+/* scrollbar discrete */
+* { scrollbar-width: thin; scrollbar-color: #2a2a2a transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 8px; }
 
-#app { display: grid; grid-template-columns: 260px 1fr; height: 100dvh; }
-#lista { border-right: 1px solid var(--bordo); display: flex; flex-direction: column; background: var(--carta); min-height: 0; }
-#lista header { padding: 14px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 18px; }
-#bots { overflow-y: auto; flex: 1; padding: 0 8px; }
-.bot { display: block; width: 100%; text-align: left; background: none; padding: 10px 12px; margin-bottom: 2px; }
-.bot.attivo { background: var(--carta2); }
-.bot small { display: block; color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#esci { margin: 8px; background: none; color: var(--tenue); }
+/* ---------- pulsanti ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 999px; font-weight: 500; font-size: 14px; transition: background .2s, color .2s, transform .15s var(--morbido), opacity .2s; white-space: nowrap; }
+.btn:active { transform: scale(.97); }
+.btn.bianco { background: var(--bianco); color: #000; }
+.btn.bianco:hover { background: #fff; }
+.btn.grigio { background: var(--sup3); color: var(--testo); }
+.btn.grigio:hover { background: var(--sup4); }
+.btn.vuoto { color: var(--testo2); }
+.btn.vuoto:hover { background: var(--sup2); color: var(--testo); }
+.btn.pericolo { color: var(--rosso); }
+.btn:disabled { opacity: .4; cursor: default; }
+.icona { width: 36px; height: 36px; border-radius: 10px; display: inline-grid; place-items: center; color: var(--tenue); transition: background .2s, color .2s; }
+.icona:hover { background: var(--sup2); color: var(--testo); }
+.icona.attivo { background: var(--sup3); color: var(--testo); }
+.icona.pericolo:hover { color: var(--rosso); }
 
-#chat { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-#chat header { padding: 10px 14px; border-bottom: 1px solid var(--bordo); display: flex; gap: 8px; align-items: center; }
-#chat header h2 { margin: 0; font-size: 17px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.campo { width: 100%; background: var(--sup1); border: 1px solid var(--linea2); border-radius: 14px; padding: 12px 14px; outline: none; font-size: 16px; transition: border-color .2s, background .2s; }
+.campo:focus { border-color: rgba(255, 255, 255, .28); background: var(--sup2); }
+.campo::placeholder { color: var(--spento); }
+textarea.campo { resize: vertical; min-height: 96px; line-height: 1.5; }
+label.etichetta { display: grid; gap: 8px; font-size: 13px; color: var(--tenue); font-weight: 500; }
+
+/* ---------- avatar dei bot ---------- */
+.avatar { --s: 32px; width: var(--s); height: var(--s); flex: none; display: grid; place-items: center; font-weight: 600; font-size: calc(var(--s) * .44); line-height: 1; user-select: none; position: relative; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
+.avatar span { transform: translateY(.02em); }
+
+/* ---------- accesso ---------- */
+#login { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px;
+  background: radial-gradient(1200px 600px at 50% -10%, rgba(255, 255, 255, .07), transparent 60%), var(--nero); }
+.login-box { width: min(380px, 100%); display: grid; gap: 14px; animation: sali .6s var(--morbido) both; }
+.marchio { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; letter-spacing: -.02em; }
+.marchio svg { width: 26px; height: 26px; }
+.login-box h1 { margin: 26px 0 0; font-size: 34px; line-height: 1.1; font-weight: 600; letter-spacing: -.035em; }
+.login-box p { margin: 0 0 14px; color: var(--tenue); }
+.login-box .btn { height: 48px; font-size: 15px; margin-top: 4px; }
+.errore { color: var(--rosso); min-height: 1.4em; font-size: 14px; }
+@keyframes sali { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* ---------- struttura ---------- */
+#app { display: grid; grid-template-columns: 272px minmax(0, 1fr); height: 100dvh; background: var(--nero); }
+#app.con-pc { grid-template-columns: 272px minmax(0, 1fr) 500px; }
+
+/* barra laterale */
+#lista { background: var(--fondo); border-right: 1px solid var(--linea); display: flex; flex-direction: column; min-height: 0; }
+#lista .testa { padding: 18px 16px 12px; display: flex; align-items: center; justify-content: space-between; }
+#nuovo { margin: 4px 12px 14px; height: 42px; justify-content: flex-start; padding: 0 14px; background: var(--sup2); color: var(--testo); border: 1px solid var(--linea); border-radius: 14px; }
+#nuovo:hover { background: var(--sup3); }
+.sezione { padding: 6px 20px; font-size: 12px; color: var(--spento); font-weight: 500; letter-spacing: .02em; }
+#bots { overflow-y: auto; flex: 1; padding: 0 10px 10px; }
+.bot { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 9px 10px; border-radius: 12px; margin-bottom: 2px; transition: background .15s; }
+.bot:hover { background: var(--sup1); }
+.bot.attivo { background: var(--sup2); }
+.bot .testi { min-width: 0; flex: 1; }
+.bot b { display: block; font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bot small { display: block; color: var(--spento); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lista-vuota { color: var(--spento); font-size: 13.5px; padding: 8px 12px; }
+#lista .piede { padding: 12px; border-top: 1px solid var(--linea); }
+#esci { width: 100%; justify-content: flex-start; color: var(--tenue); }
+
+/* chat */
+#chat { display: flex; flex-direction: column; min-height: 0; min-width: 0; position: relative; }
+#chat > header { height: 60px; padding: 0 14px 0 18px; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid transparent; transition: border-color .2s; flex: none; }
+#chat > header.ombra { border-bottom-color: var(--linea); }
+#chat-chi { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+#chat-chi h2 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#chat-stato { font-size: 12px; color: var(--tenue); display: flex; align-items: center; gap: 6px; }
+#chat-stato::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--spento); }
+#chat-stato.lavora { color: var(--testo2); }
+#chat-stato.lavora::before { background: var(--verde); box-shadow: 0 0 0 3px rgba(74, 222, 128, .15); animation: pulsa 1.4s infinite; }
 #indietro { display: none; }
-#messaggi { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
-.msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; overflow-wrap: anywhere; }
-.msg.user { align-self: flex-end; background: var(--accento); color: #fff; white-space: pre-wrap; }
-.msg.text { align-self: flex-start; background: var(--carta); border: 1px solid var(--bordo); }
-.msg.text pre { background: var(--term); color: var(--term-testo); padding: 10px; border-radius: 8px; overflow-x: auto; }
-.msg.text code { font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
-.msg.errore { align-self: center; color: var(--rosso); }
-details.tool { align-self: flex-start; max-width: 95%; width: 100%; background: var(--term); color: var(--term-testo); border-radius: 10px; font: 13px/1.4 ui-monospace, Menlo, monospace; }
-details.tool summary { padding: 8px 12px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-details.tool pre { margin: 0; padding: 0 12px 10px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 400px; overflow-y: auto; }
-.vuoto { margin: auto; color: var(--tenue); text-align: center; padding: 20px; }
-.lavora { align-self: flex-start; color: var(--tenue); font-style: italic; }
-#form { display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--bordo); }
-#form textarea { max-height: 160px; }
-#modo { white-space: nowrap; }
-#form.terminale textarea { font-family: ui-monospace, Menlo, monospace; background: var(--term); color: var(--term-testo); }
+.azioni-chat { display: flex; gap: 2px; }
+#apri-pc { height: 34px; padding: 0 12px; font-size: 13px; border-radius: 10px; }
+#apri-pc.attivo { background: var(--bianco); color: #000; }
 
-dialog { border: 0; border-radius: 16px; background: var(--carta); color: var(--testo); width: min(460px, calc(100% - 32px)); padding: 20px; }
-dialog::backdrop { background: rgba(0,0,0,.4); }
-dialog form { display: grid; gap: 10px; }
-dialog .azioni { display: flex; justify-content: flex-end; gap: 8px; }
+#messaggi { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+.colonna { width: min(760px, 100%); margin: 0 auto; padding: 24px 20px 40px; display: flex; flex-direction: column; gap: 18px; }
+.msg { overflow-wrap: anywhere; animation: compari .35s var(--morbido) both; }
+.msg.user { align-self: flex-end; max-width: 80%; background: var(--sup3); padding: 10px 16px; border-radius: 22px 22px 6px 22px; white-space: pre-wrap; color: var(--testo); }
+.msg.text { align-self: stretch; color: var(--testo2); font-size: 15.5px; line-height: 1.7; }
+.msg.text b { color: var(--testo); font-weight: 600; }
+.msg.text a { color: var(--testo); text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .3); text-underline-offset: 3px; }
+.msg.text code { font-family: var(--mono); font-size: 13px; background: var(--sup2); border: 1px solid var(--linea); padding: 1px 6px; border-radius: 6px; color: var(--testo); }
+.msg.text pre { background: var(--sup1); border: 1px solid var(--linea); padding: 14px 16px; border-radius: 14px; overflow-x: auto; margin: 6px 0; }
+.msg.text pre code { background: none; border: 0; padding: 0; font-size: 13px; line-height: 1.6; }
+.msg.errore { align-self: flex-start; color: var(--rosso); font-size: 14px; background: rgba(248, 113, 113, .08); border: 1px solid rgba(248, 113, 113, .2); padding: 10px 14px; border-radius: 14px; }
+@keyframes compari { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
+/* passaggi del bot (strumenti) */
+details.tool { align-self: stretch; border: 1px solid var(--linea); background: var(--fondo); border-radius: 14px; overflow: hidden; animation: compari .35s var(--morbido) both; }
+details.tool + details.tool { margin-top: -10px; }
+details.tool summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; color: var(--tenue); font-size: 13.5px; }
+details.tool summary::-webkit-details-marker { display: none; }
+details.tool summary:hover { color: var(--testo2); }
+details.tool summary .etich { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+details.tool summary .etich em { font-style: normal; color: var(--testo2); font-family: var(--mono); font-size: 12.5px; }
+details.tool summary .freccia { transition: transform .2s; color: var(--spento); }
+details.tool[open] summary .freccia { transform: rotate(90deg); }
+details.tool .stato-tool { width: 16px; height: 16px; display: grid; place-items: center; }
+details.tool.corso .stato-tool::before { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 1.6px solid var(--sup4); border-top-color: var(--testo2); animation: gira .8s linear infinite; }
+details.tool.ok .stato-tool::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--verde); }
+details.tool.ko .stato-tool::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--rosso); }
+details.tool pre { margin: 0; padding: 12px 16px 14px; border-top: 1px solid var(--linea); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 380px; overflow-y: auto; font: 12.5px/1.6 var(--mono); color: #b9b9be; background: #070707; }
+@keyframes gira { to { transform: rotate(360deg); } }
+
+/* "sta pensando" con riflesso */
+.pensa { align-self: flex-start; display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.pensa span { background: linear-gradient(90deg, #5c5c62 0%, #f4f4f5 40%, #5c5c62 80%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: riflesso 1.8s linear infinite; }
+@keyframes riflesso { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+/* stato vuoto */
+.benvenuto { margin: auto; padding: 12vh 20px 40px; text-align: center; display: grid; justify-items: center; gap: 14px; max-width: 620px; animation: sali .6s var(--morbido) both; }
+.benvenuto h3 { margin: 10px 0 0; font-size: 30px; font-weight: 600; letter-spacing: -.035em; line-height: 1.15; }
+.benvenuto p { margin: 0; color: var(--tenue); }
+.suggerimenti { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
+.sugg { border: 1px solid var(--linea2); color: var(--testo2); border-radius: 999px; padding: 8px 14px; font-size: 13.5px; transition: background .2s, color .2s, border-color .2s; }
+.sugg:hover { background: var(--sup2); color: var(--testo); border-color: rgba(255, 255, 255, .2); }
+
+/* barra di scrittura */
+.composizione { flex: none; padding: 0 20px calc(16px + env(safe-area-inset-bottom)); }
+#form { width: min(760px, 100%); margin: 0 auto; background: var(--sup1); border: 1px solid var(--linea2); border-radius: 26px; padding: 8px 8px 8px 10px; display: flex; align-items: flex-end; gap: 6px; transition: border-color .2s, box-shadow .2s; box-shadow: 0 10px 40px -10px rgba(0, 0, 0, .8); }
+#form:focus-within { border-color: rgba(255, 255, 255, .22); }
+#form textarea { flex: 1; background: none; border: 0; outline: none; resize: none; padding: 9px 6px; max-height: 200px; font-size: 15.5px; line-height: 1.5; }
+#form textarea::placeholder { color: var(--spento); }
+#modo { height: 38px; padding: 0 12px; border-radius: 999px; color: var(--tenue); display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; transition: background .2s, color .2s; }
+#modo:hover { background: var(--sup3); color: var(--testo); }
+#form.terminale #modo { background: var(--sup3); color: var(--testo); }
+#form.terminale textarea { font-family: var(--mono); font-size: 14px; }
+#invia { width: 38px; height: 38px; border-radius: 50%; background: var(--bianco); color: #000; display: grid; place-items: center; transition: opacity .2s, transform .15s var(--morbido); }
+#invia:disabled { opacity: .25; cursor: default; }
+#invia:not(:disabled):active { transform: scale(.92); }
+#invia svg { stroke-width: 2.2; }
+.nota-piede { text-align: center; color: var(--spento); font-size: 11.5px; margin-top: 10px; }
 
 /* ---------- pannello PC ---------- */
-.schermo-box { position: relative; aspect-ratio: 16 / 10; background: #0b0f14; border-radius: 10px; overflow: hidden; }
-.schermo-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.schermo-azioni { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.schermo-azioni button { font-size: 14px; padding: 7px 12px; }
-.schermo-azioni button.attivo { background: var(--accento); color: #fff; }
-#grande { width: min(1400px, calc(100% - 16px)); max-width: none; padding: 10px; }
-#grande .schermo-box { width: 100%; max-height: calc(100dvh - 110px); }
-#app.con-pc { grid-template-columns: 240px 1fr 480px; }
-#pc { border-left: 1px solid var(--bordo); background: var(--carta); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-#pc header { padding: 10px 14px; border-bottom: 1px solid var(--bordo); display: flex; align-items: center; gap: 8px; }
-#pc header h3 { margin: 0; font-size: 16px; flex: 1; }
+#pc { border-left: 1px solid var(--linea); background: var(--fondo); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+#pc > header { height: 60px; padding: 0 12px 0 18px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--linea); flex: none; }
+#pc > header h3 { margin: 0; font-size: 14px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#pc-corpo { overflow-y: auto; overflow-x: hidden; padding: 16px 18px 24px; display: grid; gap: 22px; align-content: start; }
 #pc-corpo > section { min-width: 0; }
-#pc-corpo { overflow-y: auto; overflow-x: hidden; padding: 12px 14px; display: grid; gap: 14px; align-content: start; }
-#pc h4 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--tenue); }
+#pc h4 { margin: 0 0 10px; font-size: 12px; font-weight: 500; letter-spacing: .02em; color: var(--spento); display: flex; align-items: center; gap: 8px; }
+.live { display: inline-flex; align-items: center; gap: 6px; color: var(--testo2); background: var(--sup2); border: 1px solid var(--linea); padding: 2px 8px 2px 7px; border-radius: 999px; font-size: 11px; }
+.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #ef4444; animation: pulsa 1.6s infinite; }
+@keyframes pulsa { 50% { opacity: .35; } }
+.schermo-box { position: relative; aspect-ratio: 16 / 10; background: #000; border-radius: 14px; overflow: hidden; border: 1px solid var(--linea2); box-shadow: 0 20px 50px -20px rgba(0, 0, 0, .9); }
+.schermo-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.schermo-azioni { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.schermo-azioni .btn { height: 34px; font-size: 13px; padding: 0 14px; }
+#schermo-controllo.attivo { background: var(--bianco); color: #000; }
+.ora { border-radius: 14px; padding: 12px 14px; background: var(--sup1); border: 1px solid var(--linea); font-size: 13.5px; color: var(--tenue); overflow-wrap: anywhere; display: flex; gap: 10px; align-items: flex-start; }
+.ora.attiva { color: var(--testo); font-family: var(--mono); font-size: 12.5px; }
+.ora.attiva::before { content: ""; flex: none; margin-top: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--verde); box-shadow: 0 0 0 3px rgba(74, 222, 128, .15); animation: pulsa 1.2s infinite; }
 .metriche { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.metrica { background: var(--carta2); border-radius: 10px; padding: 8px 10px; min-width: 0; }
-.metrica small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.metrica b { display: block; font-size: 17px; }
-.metrica small { color: var(--tenue); font-size: 12px; }
-.ora { border-radius: 10px; padding: 10px 12px; background: var(--carta2); font-size: 14px; overflow-wrap: anywhere; }
-.ora.attiva { background: var(--term); color: var(--term-testo); font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
-.ora.attiva::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3fb950; margin-right: 8px; animation: pulsa 1s infinite; }
-@keyframes pulsa { 50% { opacity: .3; } }
-.lista-pc { font: 12.5px/1.5 ui-monospace, Menlo, monospace; background: var(--term); color: var(--term-testo); border-radius: 10px; padding: 8px 10px; max-height: 260px; overflow: auto; }
-.lista-pc div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lista-pc button { all: unset; cursor: pointer; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lista-pc button:hover { text-decoration: underline; }
-.lista-pc .tenue { color: #8b949e; }
-#visore pre { background: var(--term); color: var(--term-testo); padding: 10px; border-radius: 8px; max-height: 60vh; overflow: auto; font: 12.5px/1.45 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
-#visore { width: min(760px, calc(100% - 32px)); }
-@media (max-width: 1000px) {
-  #app.con-pc { grid-template-columns: 1fr; }
+.metrica { background: var(--sup1); border: 1px solid var(--linea); border-radius: 14px; padding: 12px; min-width: 0; }
+.metrica b { display: block; font-size: 19px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.metrica small { display: block; color: var(--spento); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lista-pc { font: 12.5px/1.7 var(--mono); background: #070707; color: #b9b9be; border: 1px solid var(--linea); border-radius: 14px; padding: 10px 12px; max-height: 260px; overflow: auto; }
+.lista-pc div, .lista-pc button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lista-pc button { display: block; width: 100%; text-align: left; border-radius: 6px; padding: 0 4px; margin: 0 -4px; }
+.lista-pc button:hover { background: var(--sup2); color: var(--testo); }
+.lista-pc .tenue { color: var(--spento); }
+
+/* ---------- finestre ---------- */
+dialog { border: 1px solid var(--linea2); border-radius: 22px; background: var(--sup1); color: var(--testo); width: min(480px, calc(100% - 24px)); padding: 24px; box-shadow: 0 40px 100px -20px rgba(0, 0, 0, .9); }
+dialog[open] { animation: apri .3s var(--morbido); }
+dialog::backdrop { background: rgba(0, 0, 0, .7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+@keyframes apri { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+dialog h3 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
+dialog .testa-dialogo { display: flex; align-items: center; gap: 10px; }
+dialog .testa-dialogo h3, dialog .testa-dialogo b { flex: 1; }
+.azioni-dialogo { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+#dialogo { width: min(560px, calc(100% - 24px)); max-height: calc(100dvh - 24px); }
+#form-bot { display: grid; gap: 18px; }
+
+/* editor dell'aspetto */
+.editor-avatar { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; padding: 18px; background: var(--fondo); border: 1px solid var(--linea); border-radius: 18px; }
+.editor-avatar .anteprima { --s: 84px; }
+.scelte { display: grid; gap: 12px; min-width: 0; }
+.riga-scelte { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.scelta { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; outline: 2px solid transparent; outline-offset: 2px; transition: outline-color .15s, transform .15s var(--morbido); }
+.scelta:hover { transform: scale(1.08); }
+.scelta.sel { outline-color: var(--bianco); }
+.scelta.forma { border-radius: 9px; background: var(--sup2); }
+.scelta.forma i { width: 16px; height: 16px; background: var(--testo2); display: block; }
+.scelta.simbolo { border-radius: 9px; background: var(--sup2); font-size: 15px; font-weight: 600; }
+.colore-libero { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; position: relative; background: conic-gradient(#f87171, #fbbf24, #4ade80, #22d3ee, #818cf8, #e879f9, #f87171); }
+.colore-libero input { position: absolute; inset: -8px; opacity: 0; cursor: pointer; }
+.simbolo-libero { width: 64px; height: 30px; border-radius: 9px; background: var(--sup2); border: 1px solid var(--linea); text-align: center; outline: none; font-size: 14px; }
+.simbolo-libero:focus { border-color: rgba(255, 255, 255, .3); }
+.sotto { font-size: 11.5px; color: var(--spento); margin-bottom: -4px; }
+
+#visore { width: min(820px, calc(100% - 24px)); }
+#visore pre { background: #070707; color: #c7c7cc; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--linea); max-height: 62vh; overflow: auto; font: 12.5px/1.6 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; margin: 14px 0 0; }
+#grande { width: min(1500px, calc(100% - 16px)); max-width: none; padding: 12px; }
+#grande .schermo-box { width: 100%; max-height: calc(100dvh - 100px); margin-top: 10px; }
+
+/* ---------- telefono e tablet ---------- */
+@media (max-width: 1100px) {
+  #app.con-pc { grid-template-columns: minmax(0, 1fr); }
   #app.con-pc #lista, #app.con-pc #chat { display: none; }
 }
-
-@media (max-width: 700px) {
-  #app { grid-template-columns: 1fr; }
+@media (max-width: 760px) {
+  #app { grid-template-columns: minmax(0, 1fr); }
   #app.in-chat #lista { display: none; }
   #app:not(.in-chat) #chat { display: none; }
-  #indietro { display: inline-block; }
+  #indietro { display: inline-grid; }
+  #chat > header { padding: 0 8px; }
+  #apri-pc .testo-btn { display: none; }
+  .colonna { padding: 16px 16px 30px; }
+  .composizione { padding: 0 10px calc(10px + env(safe-area-inset-bottom)); }
+  .benvenuto { padding-top: 6vh; }
+  .benvenuto h3 { font-size: 25px; }
+  .editor-avatar { grid-template-columns: 1fr; justify-items: center; }
+  .nota-piede { display: none; }
 }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
 
+<!-- icone -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-piu" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2.5" y="3.5" width="19" height="13" rx="2.5"/><path d="M8 20.5h8M12 16.5v4"/></symbol>
+  <symbol id="i-matita" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14.5 7.5l2 2"/></symbol>
+  <symbol id="i-ricomincia" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5"/><path d="M3.5 3.5v5h5"/></symbol>
+  <symbol id="i-cestino" viewBox="0 0 24 24"><path d="M4 6.5h16M9.5 6.5V4.5h5v2M18 6.5l-.8 12.6a1.5 1.5 0 0 1-1.5 1.4H8.3a1.5 1.5 0 0 1-1.5-1.4L6 6.5"/></symbol>
+  <symbol id="i-su" viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/></symbol>
+  <symbol id="i-terminale" viewBox="0 0 24 24"><path d="M5 16.5l5-4.5-5-4.5M12.5 17h6.5"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20.5 14.5a2 2 0 0 1-2 2H8l-4.5 4v-15a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  <symbol id="i-indietro" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-avanti" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-espandi" viewBox="0 0 24 24"><path d="M8.5 3.5h-3a2 2 0 0 0-2 2v3M20.5 8.5v-3a2 2 0 0 0-2-2h-3M3.5 15.5v3a2 2 0 0 0 2 2h3M15.5 20.5h3a2 2 0 0 0 2-2v-3"/></symbol>
+  <symbol id="i-puntatore" viewBox="0 0 24 24"><path d="M4.5 4.5l6.5 15.5 2.3-6.7 6.7-2.3z"/></symbol>
+  <symbol id="i-esci" viewBox="0 0 24 24"><path d="M9 20.5H5.5a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2H9M16 16.5l4.5-4.5L16 7.5M20.5 12H9"/></symbol>
+  <symbol id="i-cerca" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20.5 20.5l-4.9-4.9"/></symbol>
+  <symbol id="i-globo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.5 5.2 3.5 8.5s-1.1 6.1-3.5 8.5c-2.4-2.4-3.5-5.2-3.5-8.5s1.1-6.1 3.5-8.5z"/></symbol>
+  <symbol id="i-bussola" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+  <symbol id="i-foto" viewBox="0 0 24 24"><path d="M4.5 7.5h3l1.8-2.5h5.4l1.8 2.5h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-tastiera" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M7 10h.01M10.3 10h.01M13.7 10h.01M17 10h.01M8 14h8"/></symbol>
+  <symbol id="i-orologio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-scintilla" viewBox="0 0 24 24"><path d="M12 3l2.1 6.4L20.5 11.5l-6.4 2.1L12 20l-2.1-6.4L3.5 11.5l6.4-2.1z"/></symbol>
+</svg>
+
 <div id="login">
-  <h1>🤖 BotLab</h1>
-  <p style="margin:0;color:var(--tenue)">Bot AI con il loro computer personale.</p>
-  <label id="riga-server">Indirizzo del server<input id="server" placeholder="https://123-45-67-89.sslip.io" autocomplete="url"></label>
-  <label>Password<input id="password" type="password" autocomplete="current-password"></label>
-  <button class="primario" id="entra">Entra</button>
-  <div class="errore" id="login-errore"></div>
+  <div class="login-box">
+    <div class="marchio"><svg viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#fff"/><path d="M32 14l4.2 12.8L49 31l-12.8 4.2L32 48l-4.2-12.8L15 31l12.8-4.2z" fill="#000"/></svg>BotLab</div>
+    <h1>I tuoi bot,<br>con il loro computer.</h1>
+    <p>Cercano, navigano e lavorano per te. Tu guardi.</p>
+    <label id="riga-server" class="etichetta">Indirizzo del server<input class="campo" id="server" placeholder="https://123-45-67-89.sslip.io" autocomplete="url"></label>
+    <input class="campo" id="password" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="btn bianco" id="entra">Entra</button>
+    <div class="errore" id="login-errore"></div>
+  </div>
 </div>
 
 <div id="app" class="nascosto">
   <aside id="lista">
-    <header>I miei bot <button class="primario" id="nuovo">+ Nuovo</button></header>
+    <div class="testa">
+      <div class="marchio"><svg viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#fff"/><path d="M32 14l4.2 12.8L49 31l-12.8 4.2L32 48l-4.2-12.8L15 31l12.8-4.2z" fill="#000"/></svg>BotLab</div>
+    </div>
+    <button class="btn" id="nuovo"><svg class="i"><use href="#i-piu"/></svg>Nuovo bot</button>
+    <div class="sezione">I tuoi bot</div>
     <div id="bots"></div>
-    <button id="esci">Esci</button>
+    <div class="piede"><button class="btn vuoto" id="esci"><svg class="i"><use href="#i-esci"/></svg>Esci</button></div>
   </aside>
+
   <section id="chat">
     <header>
-      <button id="indietro">‹</button>
-      <h2 id="titolo">Scegli un bot</h2>
-      <button id="apri-pc" title="Guarda il computer del bot">🖥️ PC</button>
-      <button id="pulisci" title="Cancella la conversazione">🧹</button>
-      <button id="elimina" class="pericolo" title="Elimina il bot">🗑</button>
+      <button class="icona" id="indietro" aria-label="Indietro"><svg class="i"><use href="#i-indietro"/></svg></button>
+      <div id="chat-chi">
+        <div id="chat-avatar"></div>
+        <div style="min-width:0">
+          <h2 id="titolo">BotLab</h2>
+          <div id="chat-stato">Pronto</div>
+        </div>
+      </div>
+      <div class="azioni-chat">
+        <button class="btn grigio" id="apri-pc" title="Guarda il computer del bot"><svg class="i"><use href="#i-monitor"/></svg><span class="testo-btn">Computer</span></button>
+        <button class="icona" id="modifica" title="Modifica il bot"><svg class="i"><use href="#i-matita"/></svg></button>
+        <button class="icona" id="pulisci" title="Nuova conversazione"><svg class="i"><use href="#i-ricomincia"/></svg></button>
+        <button class="icona pericolo" id="elimina" title="Elimina il bot"><svg class="i"><use href="#i-cestino"/></svg></button>
+      </div>
     </header>
-    <div id="messaggi"><div class="vuoto">Crea un bot con “+ Nuovo” per iniziare.</div></div>
-    <form id="form">
-      <button type="button" id="modo" title="Passa da chat a terminale">💬 Chat</button>
-      <textarea id="testo" rows="1" placeholder="Scrivi al bot…"></textarea>
-      <button class="primario" id="invia">➤</button>
-    </form>
+    <div id="messaggi"><div class="colonna" id="colonna"></div></div>
+    <div class="composizione">
+      <form id="form">
+        <button type="button" id="modo" title="Passa da chat a terminale"><svg class="i"><use href="#i-chat"/></svg><span>Chat</span></button>
+        <textarea id="testo" rows="1" placeholder="Chiedi qualcosa…"></textarea>
+        <button id="invia" aria-label="Invia" disabled><svg class="i"><use href="#i-su"/></svg></button>
+      </form>
+      <div class="nota-piede">Invio per mandare · Maiusc+Invio per andare a capo</div>
+    </div>
   </section>
+
   <aside id="pc" class="nascosto">
-    <header><h3 id="pc-titolo">🖥️ Computer</h3><button id="chiudi-pc">✕</button></header>
+    <header>
+      <svg class="i" style="color:var(--tenue)"><use href="#i-monitor"/></svg>
+      <h3 id="pc-titolo">Computer</h3>
+      <button class="icona" id="chiudi-pc" aria-label="Chiudi"><svg class="i"><use href="#i-x"/></svg></button>
+    </header>
     <div id="pc-corpo">
-      <section><h4>Schermo in diretta</h4>
+      <section><h4>Schermo <span class="live">Live</span></h4>
         <div class="schermo-box"><iframe id="pc-schermo" title="Schermo del bot"></iframe></div>
         <div class="schermo-azioni">
-          <button id="schermo-grande">⛶ Ingrandisci</button>
-          <button id="schermo-controllo" title="Usa tu mouse e tastiera sullo schermo del bot">🖱️ Prendi il controllo</button>
+          <button class="btn grigio" id="schermo-grande"><svg class="i"><use href="#i-espandi"/></svg>Ingrandisci</button>
+          <button class="btn grigio" id="schermo-controllo" title="Usa tu mouse e tastiera sullo schermo del bot"><svg class="i"><use href="#i-puntatore"/></svg><span>Prendi il controllo</span></button>
         </div>
       </section>
-      <section><h4>Sta facendo</h4><div id="pc-ora" class="ora">…</div></section>
+      <section><h4>Adesso</h4><div id="pc-ora" class="ora">…</div></section>
       <section><h4>Risorse</h4><div class="metriche">
         <div class="metrica"><b id="pc-cpu">–</b><small>Processore</small></div>
         <div class="metrica"><b id="pc-ram">–</b><small id="pc-ram2">Memoria</small></div>
-        <div class="metrica"><b id="pc-disco">–</b><small>File salvati</small></div>
+        <div class="metrica"><b id="pc-disco">–</b><small>File</small></div>
       </div></section>
-      <section><h4>File (tocca per aprire)</h4><div id="pc-file" class="lista-pc"></div></section>
-      <section><h4>Programmi in esecuzione</h4><div id="pc-proc" class="lista-pc"></div></section>
+      <section><h4>File</h4><div id="pc-file" class="lista-pc"></div></section>
+      <section><h4>Programmi aperti</h4><div id="pc-proc" class="lista-pc"></div></section>
       <section><h4>Ultime azioni</h4><div id="pc-storico" class="lista-pc"></div></section>
     </div>
   </aside>
 </div>
 
+<dialog id="dialogo">
+  <form method="dialog" id="form-bot">
+    <div class="testa-dialogo"><h3 id="dialogo-titolo">Nuovo bot</h3><button class="icona" value="annulla" formnovalidate aria-label="Chiudi"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="editor-avatar">
+      <div class="avatar anteprima" id="anteprima"></div>
+      <div class="scelte">
+        <div class="sotto">Colore</div>
+        <div class="riga-scelte" id="scelta-colori"></div>
+        <div class="sotto">Forma</div>
+        <div class="riga-scelte" id="scelta-forme"></div>
+        <div class="sotto">Simbolo</div>
+        <div class="riga-scelte" id="scelta-simboli"></div>
+      </div>
+    </div>
+    <label class="etichetta">Nome<input class="campo" id="nome-bot" required maxlength="60" placeholder="Es. Esploratore"></label>
+    <label class="etichetta"><span>Personalità e istruzioni <span style="color:var(--spento);font-weight:400">· facoltativo</span></span>
+      <textarea class="campo" id="istr-bot" rows="4" placeholder="Es. Sei un esperto di tecnologia. Rispondi in modo breve e preciso."></textarea>
+    </label>
+    <div class="azioni-dialogo"><button class="btn vuoto" value="annulla" formnovalidate>Annulla</button><button class="btn bianco" value="ok" id="dialogo-ok">Crea bot</button></div>
+  </form>
+</dialog>
+
 <dialog id="grande">
-  <form method="dialog" style="display:grid;gap:8px">
-    <div style="display:flex;align-items:center;gap:8px"><b id="grande-titolo" style="flex:1">Schermo</b><button>Chiudi</button></div>
+  <form method="dialog">
+    <div class="testa-dialogo"><b id="grande-titolo">Schermo</b><span class="live">Live</span><button class="icona" aria-label="Chiudi"><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="schermo-box"><iframe id="grande-schermo" title="Schermo del bot (grande)"></iframe></div>
   </form>
 </dialog>
 
 <dialog id="visore">
-  <form method="dialog" style="display:grid;gap:10px">
-    <div style="display:flex;align-items:center;gap:8px"><b id="visore-nome" style="flex:1;overflow-wrap:anywhere"></b><button>Chiudi</button></div>
+  <form method="dialog">
+    <div class="testa-dialogo"><b id="visore-nome" style="overflow-wrap:anywhere;font-family:var(--mono);font-size:13px;font-weight:500"></b><button class="icona" aria-label="Chiudi"><svg class="i"><use href="#i-x"/></svg></button></div>
     <pre id="visore-testo"></pre>
-  </form>
-</dialog>
-
-<dialog id="dialogo">
-  <form method="dialog" id="form-bot">
-    <h3 style="margin:0">Nuovo bot</h3>
-    <label>Nome<input id="nome-bot" required maxlength="60" placeholder="Es. Ricercatore"></label>
-    <label>Personalità e istruzioni (facoltativo)
-      <textarea id="istr-bot" rows="5" placeholder="Es. Sei un esperto di programmazione Python. Rispondi in modo breve."></textarea>
-    </label>
-    <div class="azioni"><button value="annulla" formnovalidate>Annulla</button><button class="primario" value="ok">Crea</button></div>
   </form>
 </dialog>
 
 <script>
 const $ = (s) => document.querySelector(s);
+const icona = (n) => `<svg class="i"><use href="#i-${n}"/></svg>`;
 const servitoDalServer = !location.hostname.endsWith("github.io");
 let cfg = {};
 try { cfg = JSON.parse(localStorage.getItem("botlab") || "{}"); } catch {}
@@ -214,17 +433,63 @@ async function api(path, opts = {}) {
   return res;
 }
 
+// ---------- aspetto dei bot ----------
+const COLORI = {
+  grafite: ["#4a4a4f", "#141416"], argento: ["#f4f4f5", "#9a9aa2"], notte: ["#3b5bdb", "#0b1530"],
+  viola: ["#8b5cf6", "#2a1060"], smeraldo: ["#34d399", "#064e3b"], ambra: ["#fbbf24", "#78350f"],
+  rubino: ["#f87171", "#5b0f0f"], rosa: ["#f472b6", "#5a0a33"], ciano: ["#67e8f9", "#0b3b4a"], oro: ["#fde68a", "#a16207"],
+};
+const FORME = {
+  cerchio: { r: "50%" }, squircle: { r: "32%" }, quadrato: { r: "14%" },
+  esagono: { c: "polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%)" },
+  ottagono: { c: "polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%)" },
+  rombo: { c: "polygon(50% 0, 100% 50%, 50% 100%, 0 50%)" },
+  goccia: { r: "50% 50% 50% 14%" }, foglia: { r: "62% 14% 62% 14%" },
+};
+const SIMBOLI = ["", "✦", "◆", "●", "⚡", "🔍", "🧠", "💻", "🌐", "🤖", "🎨", "🚀"];
+
+function hashColore(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) | 0; return Object.keys(COLORI)[Math.abs(h) % 10]; }
+function luminoso(hex) {
+  const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 165;
+}
+function sfondo(colore) {
+  if (COLORI[colore]) return { bg: `linear-gradient(145deg, ${COLORI[colore][0]}, ${COLORI[colore][1]})`, chiaro: luminoso(COLORI[colore][0]) && luminoso(COLORI[colore][1]) };
+  if (/^#[0-9a-f]{6}$/i.test(colore)) return { bg: `linear-gradient(145deg, ${colore}, color-mix(in srgb, ${colore} 35%, #000))`, chiaro: false };
+  return sfondo("grafite");
+}
+function avatarEl(bot, size = 32, extra = {}) {
+  const a = { forma: "squircle", colore: hashColore(bot.id || bot.name || ""), simbolo: "", ...(bot.avatar || {}), ...extra };
+  const el = document.createElement("div");
+  el.className = "avatar";
+  aggiornaAvatar(el, a, bot.name, size);
+  return el;
+}
+function aggiornaAvatar(el, a, nome, size) {
+  const s = sfondo(a.colore), f = FORME[a.forma] || FORME.squircle;
+  el.style.setProperty("--s", size + "px");
+  el.style.background = s.bg;
+  el.style.color = s.chiaro ? "#111" : "#fff";
+  el.style.borderRadius = f.r || "0";
+  el.style.clipPath = f.c || "none";
+  const testo = a.simbolo || (String(nome || "?").trim()[0] || "?").toUpperCase();
+  el.innerHTML = `<span></span>`;
+  el.firstChild.textContent = testo;
+}
+
 // ---------- accesso ----------
 if (servitoDalServer) $("#riga-server").classList.add("nascosto");
 $("#server").value = cfg.server || "";
 $("#entra").onclick = async () => {
   cfg = { server: $("#server").value.trim(), password: $("#password").value };
   $("#login-errore").textContent = "";
+  $("#entra").disabled = true;
   try {
     await api("/api/ping");
     try { localStorage.setItem("botlab", JSON.stringify(cfg)); } catch {}
     avvia();
   } catch (e) { $("#login-errore").textContent = e.message === "Failed to fetch" ? "Server non raggiungibile" : e.message; }
+  finally { $("#entra").disabled = false; }
 };
 $("#password").onkeydown = (e) => { if (e.key === "Enter") $("#entra").click(); };
 function esci() {
@@ -237,56 +502,163 @@ $("#esci").onclick = esci;
 async function avvia() {
   $("#login").classList.add("nascosto"); $("#app").classList.remove("nascosto");
   await caricaBot();
+  if (!attuale) benvenutoGenerale();
 }
 
-// ---------- bot ----------
+// ---------- elenco bot ----------
 async function caricaBot() {
   bots = await (await api("/api/bots")).json();
-  const box = $("#bots"); box.innerHTML = "";
+  const box = $("#bots"); box.replaceChildren();
   for (const b of bots) {
     const el = document.createElement("button");
     el.className = "bot" + (attuale?.id === b.id ? " attivo" : "");
-    el.innerHTML = `<b></b><small></small>`;
-    el.querySelector("b").textContent = b.name;
-    el.querySelector("small").textContent = b.instructions || "Nessuna istruzione";
+    el.dataset.id = b.id;
+    const t = document.createElement("div"); t.className = "testi";
+    t.innerHTML = `<b></b><small></small>`;
+    t.querySelector("b").textContent = b.name;
+    t.querySelector("small").textContent = b.instructions || "Assistente con computer";
+    el.append(avatarEl(b, 34), t);
     el.onclick = () => apri(b);
     box.appendChild(el);
   }
-  if (!bots.length) box.innerHTML = `<p class="vuoto">Ancora nessun bot.</p>`;
+  if (!bots.length) box.innerHTML = `<div class="lista-vuota">Ancora nessun bot.</div>`;
 }
 
-$("#nuovo").onclick = () => { $("#form-bot").reset(); $("#dialogo").showModal(); };
+function benvenutoGenerale() {
+  $("#titolo").textContent = "";
+  $(".nota-piede").classList.add("nascosto");
+  $("#chat-avatar").replaceChildren();
+  $("#chat-stato").classList.add("nascosto");
+  document.querySelector(".azioni-chat").classList.add("nascosto");
+  $("#form").classList.add("nascosto");
+  $("#colonna").innerHTML = `<div class="benvenuto">
+    <div class="marchio" style="font-size:0"><svg viewBox="0 0 64 64" style="width:56px;height:56px"><rect width="64" height="64" rx="18" fill="#fff"/><path d="M32 14l4.2 12.8L49 31l-12.8 4.2L32 48l-4.2-12.8L15 31l12.8-4.2z" fill="#000"/></svg></div>
+    <h3>${bots.length ? "Scegli un bot" : "Crea il tuo primo bot"}</h3>
+    <p>${bots.length ? "Aprilo dall'elenco a sinistra, oppure creane uno nuovo." : "Ogni bot ha il suo computer con browser e terminale.<br>Gli chiedi qualcosa e lo guardi lavorare in diretta."}</p>
+    <div class="suggerimenti"><button class="btn bianco" onclick="apriEditor()">${icona("piu")}Nuovo bot</button></div>
+  </div>`;
+}
+
+// ---------- crea / modifica bot ----------
+let bozza = null, inModifica = null;
+function disegnaEditor() {
+  const nome = $("#nome-bot").value || "Bot";
+  aggiornaAvatar($("#anteprima"), bozza, nome, 84);
+  const colori = $("#scelta-colori"); colori.replaceChildren();
+  for (const [k, [c1, c2]] of Object.entries(COLORI)) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "scelta" + (bozza.colore === k ? " sel" : "");
+    b.style.background = `linear-gradient(145deg, ${c1}, ${c2})`; b.title = k;
+    b.onclick = () => { bozza.colore = k; disegnaEditor(); };
+    colori.append(b);
+  }
+  const libero = document.createElement("label"); libero.className = "colore-libero" + (/^#/.test(bozza.colore) ? " scelta sel" : ""); libero.title = "Colore a scelta";
+  libero.innerHTML = `<input type="color">`;
+  const inp = libero.querySelector("input"); inp.value = /^#/.test(bozza.colore) ? bozza.colore : "#6366f1";
+  inp.oninput = () => { bozza.colore = inp.value; aggiornaAvatar($("#anteprima"), bozza, nome, 84); };
+  inp.onchange = () => disegnaEditor();
+  colori.append(libero);
+
+  const forme = $("#scelta-forme"); forme.replaceChildren();
+  for (const [k, f] of Object.entries(FORME)) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "scelta forma" + (bozza.forma === k ? " sel" : ""); b.title = k;
+    const i = document.createElement("i"); i.style.borderRadius = f.r || "0"; i.style.clipPath = f.c || "none";
+    b.append(i); b.onclick = () => { bozza.forma = k; disegnaEditor(); };
+    forme.append(b);
+  }
+  const simboli = $("#scelta-simboli"); simboli.replaceChildren();
+  for (const s of SIMBOLI) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "scelta simbolo" + (bozza.simbolo === s ? " sel" : "");
+    b.textContent = s || (nome.trim()[0] || "A").toUpperCase(); b.title = s ? "Simbolo" : "Iniziale del nome";
+    b.onclick = () => { bozza.simbolo = s; disegnaEditor(); };
+    simboli.append(b);
+  }
+  const altro = document.createElement("input"); altro.className = "simbolo-libero"; altro.maxLength = 2; altro.placeholder = "Altro";
+  altro.value = SIMBOLI.includes(bozza.simbolo) ? "" : bozza.simbolo;
+  altro.oninput = () => { bozza.simbolo = [...altro.value.trim()].slice(0, 2).join(""); aggiornaAvatar($("#anteprima"), bozza, nome, 84); };
+  simboli.append(altro);
+}
+function apriEditor(bot = null) {
+  inModifica = bot;
+  $("#form-bot").reset();
+  bozza = { forma: "squircle", colore: bot ? hashColore(bot.id) : Object.keys(COLORI)[Math.floor(Math.random() * 10)], simbolo: "", ...(bot?.avatar || {}) };
+  $("#dialogo-titolo").textContent = bot ? "Modifica bot" : "Nuovo bot";
+  $("#dialogo-ok").textContent = bot ? "Salva" : "Crea bot";
+  $("#nome-bot").value = bot?.name || "";
+  $("#istr-bot").value = bot?.instructions || "";
+  disegnaEditor();
+  $("#dialogo").showModal();
+  if (!bot) $("#nome-bot").focus();
+}
+$("#nome-bot").oninput = () => { if (!bozza.simbolo) disegnaEditor(); };
+$("#nuovo").onclick = () => apriEditor();
+$("#modifica").onclick = () => attuale && apriEditor(attuale);
 $("#dialogo").onclose = async () => {
   if ($("#dialogo").returnValue !== "ok") return;
+  const dati = { name: $("#nome-bot").value, instructions: $("#istr-bot").value, avatar: bozza };
   try {
-    const b = await (await api("/api/bots", { method: "POST", body: JSON.stringify({ name: $("#nome-bot").value, instructions: $("#istr-bot").value }) })).json();
-    await caricaBot(); apri(b);
+    const b = inModifica
+      ? await (await api(`/api/bots/${inModifica.id}`, { method: "PATCH", body: JSON.stringify(dati) })).json()
+      : await (await api("/api/bots", { method: "POST", body: JSON.stringify(dati) })).json();
+    await caricaBot();
+    if (inModifica && attuale?.id === b.id) { attuale = b; intestazione(b); } else apri(b);
   } catch (e) { alert(e.message); }
 };
 
+// ---------- conversazione ----------
+function intestazione(b) {
+  $("#titolo").textContent = b.name;
+  $("#chat-avatar").replaceChildren(avatarEl(b, 34));
+  $("#chat-stato").classList.remove("nascosto");
+  document.querySelector(".azioni-chat").classList.remove("nascosto");
+  $("#form").classList.remove("nascosto");
+  $(".nota-piede").classList.remove("nascosto");
+  if (!$("#pc").classList.contains("nascosto")) $("#pc-titolo").textContent = "Computer di " + b.name;
+}
+function statoChat(lavora) {
+  $("#chat-stato").classList.toggle("lavora", lavora);
+  $("#chat-stato").textContent = lavora ? "Al lavoro" : "Pronto";
+}
 async function apri(b) {
   attuale = b;
-  if (!$("#pc").classList.contains("nascosto")) { $("#pc-titolo").textContent = "🖥️ Computer di " + b.name; aggiornaPc(); accendiSchermo(); }
-  $("#titolo").textContent = b.name;
+  intestazione(b);
+  statoChat(occupato && occupatoId === b.id);
+  if (!$("#pc").classList.contains("nascosto")) { aggiornaPc(); accendiSchermo(); }
   $("#app").classList.add("in-chat");
-  document.querySelectorAll(".bot").forEach((el, i) => el.classList.toggle("attivo", bots[i]?.id === b.id));
-  const box = $("#messaggi"); box.innerHTML = "";
+  document.querySelectorAll(".bot").forEach((el) => el.classList.toggle("attivo", el.dataset.id === b.id));
+  const col = $("#colonna"); col.replaceChildren();
   const msgs = await (await api(`/api/bots/${b.id}/messages`)).json();
-  if (!msgs.length) box.innerHTML = `<div class="vuoto">Il computer di <b></b> è pronto.<br>Chiedigli qualcosa, ad esempio:<br>“Cerca le notizie di oggi sull'AI e riassumile”</div>`, box.querySelector("b").textContent = b.name;
+  if (attuale?.id !== b.id) return;
+  if (!msgs.length) benvenutoBot(b);
   let ultimoTool = null;
-  for (const m of msgs) ultimoTool = mostra(m, ultimoTool);
-  scorri();
+  for (const m of msgs) ultimoTool = mostra(m, ultimoTool, false);
+  scorri(true);
+  if (!matchMedia("(pointer: coarse)").matches) $("#testo").focus();
+}
+function benvenutoBot(b) {
+  const box = document.createElement("div"); box.className = "benvenuto";
+  const h = document.createElement("h3"); h.textContent = `Ciao, sono ${b.name}`;
+  const p = document.createElement("p"); p.textContent = "Ho un computer con browser e terminale. Cosa faccio per te?";
+  const sugg = document.createElement("div"); sugg.className = "suggerimenti";
+  for (const s of ["Cerca le notizie di oggi sull'intelligenza artificiale", "Apri il browser e vai su wikipedia.it", "Scrivi uno script Python che calcola i numeri primi", "Che computer hai? Mostrami le sue caratteristiche"]) {
+    const x = document.createElement("button"); x.className = "sugg"; x.textContent = s;
+    x.onclick = () => { $("#testo").value = s; aggiornaInvia(); $("#form").requestSubmit(); };
+    sugg.append(x);
+  }
+  box.append(avatarEl(b, 72), h, p, sugg);
+  $("#colonna").append(box);
 }
 $("#indietro").onclick = () => $("#app").classList.remove("in-chat");
 $("#elimina").onclick = async () => {
   if (!attuale || !confirm(`Eliminare "${attuale.name}" e il suo computer? Non si può annullare.`)) return;
   await api(`/api/bots/${attuale.id}`, { method: "DELETE" });
   mostraPc(false);
-  attuale = null; $("#titolo").textContent = "Scegli un bot"; $("#messaggi").innerHTML = "";
-  $("#app").classList.remove("in-chat"); caricaBot();
+  attuale = null;
+  $("#app").classList.remove("in-chat");
+  await caricaBot();
+  benvenutoGenerale();
 };
 $("#pulisci").onclick = async () => {
-  if (!attuale || !confirm("Cancellare la conversazione? (i file sul computer del bot restano)")) return;
+  if (!attuale || !confirm("Iniziare una nuova conversazione? (i file sul computer del bot restano)")) return;
   await api(`/api/bots/${attuale.id}/reset`, { method: "POST" }); apri(attuale);
 };
 
@@ -299,85 +671,105 @@ function markdown(t) {
        .replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>")
        .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<i>$2</i>")
        .replace(/^#{1,6} (.*)$/gm, "<b>$1</b>")
+       .replace(/^[-*] (.*)$/gm, "• $1")
        .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
        .replace(/\n/g, "<br>");
   return t.replace(/\u0000(\d+)\u0000/g, (_, i) => blocchi[i]);
 }
-function descriviTool(m) {
-  if (m.name === "run_command") return "$ " + (m.args.command || "");
-  if (m.name === "web_search") return "🔎 " + (m.args.query || "");
-  if (m.name === "fetch_url") return "🌐 " + (m.args.url || "");
-  if (m.name === "apri_browser") return "🧭 Apre il browser: " + (m.args.url || "");
-  if (m.name === "guarda_schermo") return "📸 Guarda lo schermo";
+// [icona, testo principale, dettaglio in monospace]
+function infoTool(m) {
+  const a = m.args || {};
+  if (m.name === "run_command") return ["terminale", "Terminale", a.command];
+  if (m.name === "web_search") return ["cerca", "Ricerca", a.query];
+  if (m.name === "fetch_url") return ["globo", "Legge la pagina", a.url];
+  if (m.name === "apri_browser") return ["bussola", "Apre il browser", a.url];
+  if (m.name === "guarda_schermo") return ["foto", "Guarda lo schermo", ""];
   if (m.name === "usa_computer") {
-    const a = m.args, dove = a.x != null ? ` (${a.x}, ${a.y})` : "";
-    return { click: "🖱️ Clic" + dove, double_click: "🖱️ Doppio clic" + dove, right_click: "🖱️ Clic destro" + dove, move: "🖱️ Sposta il mouse" + dove,
-      type: "⌨️ Scrive: " + (a.text || ""), key: "⌨️ Preme: " + (a.text || ""), scroll: "🖱️ Scorre " + (a.direction === "up" ? "su" : "giù"), wait: "⏳ Aspetta" }[a.action] || "🖱️ " + a.action;
+    const dove = a.x != null ? `${a.x}, ${a.y}` : "";
+    return ({
+      click: ["puntatore", "Clic", dove], double_click: ["puntatore", "Doppio clic", dove], right_click: ["puntatore", "Clic destro", dove],
+      move: ["puntatore", "Sposta il mouse", dove], type: ["tastiera", "Scrive", a.text], key: ["tastiera", "Preme", a.text],
+      scroll: ["puntatore", a.direction === "up" ? "Scorre su" : "Scorre giù", ""], wait: ["orologio", "Aspetta", ""],
+    })[a.action] || ["puntatore", a.action, ""];
   }
-  return m.name;
+  return ["scintilla", m.name, ""];
 }
+function descriviTool(m) { const [, t, d] = infoTool(m); return d ? `${t} · ${d}` : t; }
 function testoRisultato(r) {
   if (!r) return "";
   if (r.error) return "Errore: " + r.error;
-  if (r.foto) return "📸 Fatto (guarda lo schermo nel pannello 🖥️ PC)";
+  if (r.foto) return "Fatto. Guarda lo schermo nel pannello Computer.";
   if ("stdout" in r) return (r.stdout || "") + (r.stderr ? "\n" + r.stderr : "") + (r.exit_code ? `\n[uscita ${r.exit_code}]` : "") || "(nessun output)";
-  if (r.results) return r.results.map((x) => `• ${x.title}\n  ${x.url}\n  ${x.snippet}`).join("\n\n") || "Nessun risultato";
+  if (r.results) return r.results.map((x) => `${x.title}\n${x.url}\n${x.snippet}`).join("\n\n") || "Nessun risultato";
   if ("text" in r) return r.text;
   return JSON.stringify(r, null, 2);
 }
-function mostra(m, ultimoTool) {
-  const box = $("#messaggi");
-  box.querySelector(".vuoto")?.remove();
+function mostra(m, ultimoTool, inCorso = true) {
+  const col = $("#colonna");
+  col.querySelector(".benvenuto")?.remove();
   if (m.type === "tool") {
-    const d = document.createElement("details"); d.className = "tool";
-    d.innerHTML = `<summary></summary><pre>…</pre>`;
-    d.querySelector("summary").textContent = descriviTool(m);
-    box.appendChild(d); return d;
+    const [ic, t, d] = infoTool(m);
+    const el = document.createElement("details"); el.className = "tool " + (inCorso ? "corso" : "ok");
+    el.innerHTML = `<summary><span class="stato-tool"></span>${icona(ic)}<span class="etich"></span><svg class="i freccia"><use href="#i-avanti"/></svg></summary><pre>…</pre>`;
+    const et = el.querySelector(".etich"); et.textContent = t + (d ? " " : "");
+    if (d) { const em = document.createElement("em"); em.textContent = d; et.append(em); }
+    col.appendChild(el); return el;
   }
   if (m.type === "tool_result") {
-    if (ultimoTool) ultimoTool.querySelector("pre").textContent = testoRisultato(m.result);
+    if (ultimoTool) {
+      ultimoTool.querySelector("pre").textContent = testoRisultato(m.result);
+      const ko = m.result?.error || (m.result?.exit_code && m.result.exit_code !== 0);
+      ultimoTool.className = "tool " + (ko ? "ko" : "ok");
+    }
     return null;
   }
   const el = document.createElement("div");
   el.className = "msg " + (m.type === "error" ? "errore" : m.type);
   if (m.type === "text") el.innerHTML = markdown(m.text);
-  else el.textContent = m.type === "error" ? "⚠️ " + m.error : m.text;
-  box.appendChild(el);
+  else el.textContent = m.type === "error" ? m.error : m.text;
+  col.appendChild(el);
   return ultimoTool;
 }
-const scorri = () => { const b = $("#messaggi"); b.scrollTop = b.scrollHeight; };
+function scorri(subito) {
+  const b = $("#messaggi");
+  if (subito) { b.style.scrollBehavior = "auto"; b.scrollTop = b.scrollHeight; b.style.scrollBehavior = ""; }
+  else b.scrollTop = b.scrollHeight;
+}
+$("#messaggi").addEventListener("scroll", () => $("#chat > header").classList.toggle("ombra", $("#messaggi").scrollTop > 4));
 
 // ---------- invio ----------
+let occupatoId = null;
+function aggiornaInvia() { $("#invia").disabled = occupato || !$("#testo").value.trim(); }
 $("#modo").onclick = () => {
   modoTerminale = !modoTerminale;
-  $("#modo").textContent = modoTerminale ? "⌨️ Terminale" : "💬 Chat";
+  $("#modo").innerHTML = modoTerminale ? `${icona("terminale")}<span>Terminale</span>` : `${icona("chat")}<span>Chat</span>`;
   $("#form").classList.toggle("terminale", modoTerminale);
-  $("#testo").placeholder = modoTerminale ? "Comando da eseguire sul computer del bot…" : "Scrivi al bot…";
+  $("#testo").placeholder = modoTerminale ? "Comando da eseguire sul computer del bot…" : "Chiedi qualcosa…";
   $("#testo").focus();
 };
-$("#testo").addEventListener("input", (e) => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; });
+$("#testo").addEventListener("input", (e) => { e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; aggiornaInvia(); });
 $("#testo").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey && !matchMedia("(pointer: coarse)").matches) { e.preventDefault(); $("#form").requestSubmit(); }
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing && !matchMedia("(pointer: coarse)").matches) { e.preventDefault(); $("#form").requestSubmit(); }
 });
 $("#form").onsubmit = async (e) => {
   e.preventDefault();
   const testo = $("#testo").value.trim();
   if (!testo || !attuale || occupato) return;
   $("#testo").value = ""; $("#testo").style.height = "auto";
-  occupato = true; $("#invia").disabled = true;
+  occupato = true; occupatoId = attuale.id; aggiornaInvia(); statoChat(true);
   const botId = attuale.id;
   const visibile = () => attuale?.id === botId; // l'utente potrebbe aprire un altro bot nel frattempo
+  const pensa = document.createElement("div"); pensa.className = "pensa"; pensa.innerHTML = "<span>Sto pensando…</span>";
   try {
     if (modoTerminale) {
       const t = mostra({ type: "tool", name: "run_command", args: { command: testo } });
       t.open = true; scorri();
-      const r = await (await api(`/api/bots/${attuale.id}/exec`, { method: "POST", body: JSON.stringify({ command: testo }) })).json();
-      if (visibile()) mostra({ type: "tool_result", result: r }, t);
+      const r = await (await api(`/api/bots/${botId}/exec`, { method: "POST", body: JSON.stringify({ command: testo }) })).json();
+      if (visibile()) { mostra({ type: "tool_result", result: r }, t); scorri(); }
     } else {
       mostra({ type: "user", text: testo });
-      const att = document.createElement("div"); att.className = "lavora"; att.textContent = "Sta lavorando…";
-      $("#messaggi").appendChild(att); scorri();
-      const res = await api(`/api/bots/${attuale.id}/chat`, { method: "POST", body: JSON.stringify({ text: testo }) });
+      $("#colonna").appendChild(pensa); scorri();
+      const res = await api(`/api/bots/${botId}/chat`, { method: "POST", body: JSON.stringify({ text: testo }) });
       const reader = res.body.getReader(); const dec = new TextDecoder();
       let buf = "", ultimoTool = null;
       for (;;) {
@@ -389,23 +781,23 @@ $("#form").onsubmit = async (e) => {
           const riga = buf.slice(0, i); buf = buf.slice(i + 1);
           if (!riga) continue;
           const ev = JSON.parse(riga);
-          if (ev.type === "done") continue;
-          if (!visibile()) continue;
+          if (ev.type === "done" || !visibile()) continue;
           ultimoTool = mostra(ev, ultimoTool);
-          $("#messaggi").appendChild(att); scorri();
+          pensa.firstChild.textContent = ev.type === "tool" ? "Sto lavorando…" : "Sto pensando…";
+          $("#colonna").appendChild(pensa); scorri();
         }
       }
-      att.remove();
     }
   } catch (err) {
-    document.querySelector(".lavora")?.remove();
     if (visibile()) mostra({ type: "error", error: err.message });
   } finally {
-    occupato = false; $("#invia").disabled = false; scorri();
+    pensa.remove();
+    occupato = false; occupatoId = null; aggiornaInvia();
+    if (visibile()) { statoChat(false); scorri(); }
   }
 };
 
-// ---------- pannello PC ----------
+// ---------- pannello computer ----------
 let timerPc = null;
 function dimensione(n) { return n < 1024 ? n + " B" : n < 1048576 ? (n / 1024).toFixed(1) + " KB" : (n / 1048576).toFixed(1) + " MB"; }
 function riga(testo, classe) { const d = document.createElement("div"); d.textContent = testo; if (classe) d.className = classe; return d; }
@@ -417,32 +809,32 @@ async function aggiornaPc() {
     if (attuale?.id !== id) return;
     const ora = $("#pc-ora");
     ora.className = "ora" + (s.ora ? " attiva" : "");
-    ora.textContent = s.ora ? descriviTool(s.ora) : s.lavora ? "Sta pensando…" : "In attesa di istruzioni 💤";
+    ora.textContent = s.ora ? descriviTool(s.ora) : s.lavora ? "Sta pensando…" : "In attesa di istruzioni";
     $("#pc-cpu").textContent = s.cpu;
     $("#pc-ram").textContent = s.memoriaPerc;
     $("#pc-ram2").textContent = "Memoria · " + s.memoria.split("/")[0].trim();
     $("#pc-disco").textContent = s.disco;
     const f = $("#pc-file"); f.replaceChildren();
-    if (!s.file.length) f.append(riga("(nessun file per ora)", "tenue"));
+    if (!s.file.length) f.append(riga("Nessun file per ora", "tenue"));
     for (const x of s.file) {
       const prof = x.path.split("/").length - 1;
-      const nome = "  ".repeat(prof) + (x.dir ? "📁 " : "📄 ") + x.path.split("/").pop();
+      const nome = "  ".repeat(prof) + (x.dir ? "▸ " : "· ") + x.path.split("/").pop() + (x.dir ? "/" : "");
       if (x.dir) { f.append(riga(nome)); continue; }
       const b = document.createElement("button");
       b.textContent = nome + "  ";
-      const info = document.createElement("span"); info.className = "tenue"; info.textContent = dimensione(x.size) + " · " + x.data;
+      const info = document.createElement("span"); info.className = "tenue"; info.textContent = dimensione(x.size);
       b.append(info);
       b.onclick = () => apriFile(id, x.path);
       f.append(b);
     }
     const p = $("#pc-proc"); p.replaceChildren();
-    if (!s.processi.length) p.append(riga("(nessun programma attivo)", "tenue"));
-    for (const x of s.processi) p.append(riga(`${x.cpu.padStart(5)}%  ${x.tempo.padStart(8)}  ${x.cmd}`));
+    if (!s.processi.length) p.append(riga("Nessun programma aperto", "tenue"));
+    for (const x of s.processi) p.append(riga(`${x.cpu.padStart(5)}%  ${x.cmd}`));
     const st = $("#pc-storico"); st.replaceChildren();
-    if (!s.storico.length) st.append(riga("(niente da quando il server è acceso)", "tenue"));
+    if (!s.storico.length) st.append(riga("Ancora niente", "tenue"));
     for (const x of s.storico) st.append(riga(new Date(x.quando).toLocaleTimeString().slice(0, 5) + "  " + descriviTool(x)));
   } catch (e) {
-    $("#pc-ora").textContent = "⚠️ " + e.message;
+    $("#pc-ora").textContent = e.message;
   }
 }
 async function apriFile(id, rel) {
@@ -451,8 +843,8 @@ async function apriFile(id, rel) {
   $("#visore").showModal();
   try {
     const r = await (await api(`/api/bots/${id}/file?path=${encodeURIComponent(rel)}`)).json();
-    $("#visore-testo").textContent = r.error ? "⚠️ " + r.error : r.binario ? "(file non di testo: immagine, programma o archivio)" : (r.testo || "(file vuoto)");
-  } catch (e) { $("#visore-testo").textContent = "⚠️ " + e.message; }
+    $("#visore-testo").textContent = r.error ? r.error : r.binario ? "(file non di testo: immagine, programma o archivio)" : (r.testo || "(file vuoto)");
+  } catch (e) { $("#visore-testo").textContent = e.message; }
 }
 // schermo in diretta: chiedo un biglietto al server (serve la password) e lo passo al visore
 let biglietto = null, controllo = false;
@@ -467,17 +859,17 @@ async function accendiSchermo() {
     if (attuale?.id !== id || $("#pc").classList.contains("nascosto")) return;
     biglietto = r.biglietto;
     $("#pc-schermo").src = srcSchermo();
-  } catch (e) { $("#pc-ora").textContent = "⚠️ " + e.message; }
+  } catch (e) { $("#pc-ora").textContent = e.message; }
 }
 $("#schermo-controllo").onclick = () => {
   controllo = !controllo;
   $("#schermo-controllo").classList.toggle("attivo", controllo);
-  $("#schermo-controllo").textContent = controllo ? "🖱️ Stai controllando (tocca per lasciare)" : "🖱️ Prendi il controllo";
+  $("#schermo-controllo").querySelector("span").textContent = controllo ? "Stai controllando · rilascia" : "Prendi il controllo";
   $("#pc-schermo").src = srcSchermo();
 };
 $("#schermo-grande").onclick = () => {
   if (!biglietto) return;
-  $("#grande-titolo").textContent = "🖥️ Schermo di " + attuale.name;
+  $("#grande-titolo").textContent = "Schermo di " + attuale.name;
   $("#pc-schermo").src = "about:blank"; // un visore alla volta
   $("#grande-schermo").src = srcSchermo();
   $("#grande").showModal();
@@ -487,8 +879,9 @@ $("#grande").onclose = () => { $("#grande-schermo").src = "about:blank"; $("#pc-
 function mostraPc(si) {
   $("#pc").classList.toggle("nascosto", !si);
   $("#app").classList.toggle("con-pc", si);
+  $("#apri-pc").classList.toggle("attivo", si);
   clearInterval(timerPc);
-  if (si) { $("#pc-titolo").textContent = "🖥️ Computer di " + attuale.name; aggiornaPc(); timerPc = setInterval(aggiornaPc, 3000); accendiSchermo(); }
+  if (si) { $("#pc-titolo").textContent = "Computer di " + attuale.name; aggiornaPc(); timerPc = setInterval(aggiornaPc, 3000); accendiSchermo(); }
   else { biglietto = null; $("#pc-schermo").src = "about:blank"; }
 }
 $("#apri-pc").onclick = () => attuale && mostraPc($("#pc").classList.contains("nascosto"));

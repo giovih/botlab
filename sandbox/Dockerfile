@@ -25,7 +25,8 @@ RUN if [ "$SKIP_BROWSER" != 1 ]; then \
     fi
 COPY desktop/chromium /usr/local/bin/chromium
 COPY desktop/avvia-desktop /usr/local/bin/avvia-desktop
-COPY desktop/chromium.desktop /usr/share/applications/chromium.desktop
+COPY desktop/chromium.desktop desktop/terminale.desktop /usr/share/applications/
+COPY desktop/terminale.svg /usr/share/pixmaps/terminale.svg
 COPY desktop/tint2rc /root/.config/tint2/tint2rc
 RUN chmod +x /usr/local/bin/chromium /usr/local/bin/avvia-desktop
 WORKDIR /root
