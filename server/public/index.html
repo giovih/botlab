@@ -68,6 +68,36 @@ dialog::backdrop { background: rgba(0,0,0,.4); }
 dialog form { display: grid; gap: 10px; }
 dialog .azioni { display: flex; justify-content: flex-end; gap: 8px; }
 
+
+/* ---------- pannello PC ---------- */
+#app.con-pc { grid-template-columns: 260px 1fr 380px; }
+#pc { border-left: 1px solid var(--bordo); background: var(--carta); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+#pc header { padding: 10px 14px; border-bottom: 1px solid var(--bordo); display: flex; align-items: center; gap: 8px; }
+#pc header h3 { margin: 0; font-size: 16px; flex: 1; }
+#pc-corpo > section { min-width: 0; }
+#pc-corpo { overflow-y: auto; overflow-x: hidden; padding: 12px 14px; display: grid; gap: 14px; align-content: start; }
+#pc h4 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--tenue); }
+.metriche { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.metrica { background: var(--carta2); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.metrica small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.metrica b { display: block; font-size: 17px; }
+.metrica small { color: var(--tenue); font-size: 12px; }
+.ora { border-radius: 10px; padding: 10px 12px; background: var(--carta2); font-size: 14px; overflow-wrap: anywhere; }
+.ora.attiva { background: var(--term); color: var(--term-testo); font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+.ora.attiva::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3fb950; margin-right: 8px; animation: pulsa 1s infinite; }
+@keyframes pulsa { 50% { opacity: .3; } }
+.lista-pc { font: 12.5px/1.5 ui-monospace, Menlo, monospace; background: var(--term); color: var(--term-testo); border-radius: 10px; padding: 8px 10px; max-height: 260px; overflow: auto; }
+.lista-pc div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lista-pc button { all: unset; cursor: pointer; display: block; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lista-pc button:hover { text-decoration: underline; }
+.lista-pc .tenue { color: #8b949e; }
+#visore pre { background: var(--term); color: var(--term-testo); padding: 10px; border-radius: 8px; max-height: 60vh; overflow: auto; font: 12.5px/1.45 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+#visore { width: min(760px, calc(100% - 32px)); }
+@media (max-width: 1000px) {
+  #app.con-pc { grid-template-columns: 1fr; }
+  #app.con-pc #lista, #app.con-pc #chat { display: none; }
+}
+
 @media (max-width: 700px) {
   #app { grid-template-columns: 1fr; }
   #app.in-chat #lista { display: none; }
@@ -97,6 +127,7 @@ dialog .azioni { display: flex; justify-content: flex-end; gap: 8px; }
     <header>
       <button id="indietro">‹</button>
       <h2 id="titolo">Scegli un bot</h2>
+      <button id="apri-pc" title="Guarda il computer del bot">🖥️ PC</button>
       <button id="pulisci" title="Cancella la conversazione">🧹</button>
       <button id="elimina" class="pericolo" title="Elimina il bot">🗑</button>
     </header>
@@ -107,7 +138,28 @@ dialog .azioni { display: flex; justify-content: flex-end; gap: 8px; }
       <button class="primario" id="invia">➤</button>
     </form>
   </section>
+  <aside id="pc" class="nascosto">
+    <header><h3 id="pc-titolo">🖥️ Computer</h3><button id="chiudi-pc">✕</button></header>
+    <div id="pc-corpo">
+      <section><h4>Sta facendo</h4><div id="pc-ora" class="ora">…</div></section>
+      <section><h4>Risorse</h4><div class="metriche">
+        <div class="metrica"><b id="pc-cpu">–</b><small>Processore</small></div>
+        <div class="metrica"><b id="pc-ram">–</b><small id="pc-ram2">Memoria</small></div>
+        <div class="metrica"><b id="pc-disco">–</b><small>File salvati</small></div>
+      </div></section>
+      <section><h4>File (tocca per aprire)</h4><div id="pc-file" class="lista-pc"></div></section>
+      <section><h4>Programmi in esecuzione</h4><div id="pc-proc" class="lista-pc"></div></section>
+      <section><h4>Ultime azioni</h4><div id="pc-storico" class="lista-pc"></div></section>
+    </div>
+  </aside>
 </div>
+
+<dialog id="visore">
+  <form method="dialog" style="display:grid;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px"><b id="visore-nome" style="flex:1;overflow-wrap:anywhere"></b><button>Chiudi</button></div>
+    <pre id="visore-testo"></pre>
+  </form>
+</dialog>
 
 <dialog id="dialogo">
   <form method="dialog" id="form-bot">
@@ -193,6 +245,7 @@ $("#dialogo").onclose = async () => {
 
 async function apri(b) {
   attuale = b;
+  if (!$("#pc").classList.contains("nascosto")) { $("#pc-titolo").textContent = "🖥️ Computer di " + b.name; aggiornaPc(); }
   $("#titolo").textContent = b.name;
   $("#app").classList.add("in-chat");
   document.querySelectorAll(".bot").forEach((el, i) => el.classList.toggle("attivo", bots[i]?.id === b.id));
@@ -207,6 +260,7 @@ $("#indietro").onclick = () => $("#app").classList.remove("in-chat");
 $("#elimina").onclick = async () => {
   if (!attuale || !confirm(`Eliminare "${attuale.name}" e il suo computer? Non si può annullare.`)) return;
   await api(`/api/bots/${attuale.id}`, { method: "DELETE" });
+  mostraPc(false);
   attuale = null; $("#titolo").textContent = "Scegli un bot"; $("#messaggi").innerHTML = "";
   $("#app").classList.remove("in-chat"); caricaBot();
 };
@@ -321,6 +375,64 @@ $("#form").onsubmit = async (e) => {
     occupato = false; $("#invia").disabled = false; scorri();
   }
 };
+
+// ---------- pannello PC ----------
+let timerPc = null;
+function dimensione(n) { return n < 1024 ? n + " B" : n < 1048576 ? (n / 1024).toFixed(1) + " KB" : (n / 1048576).toFixed(1) + " MB"; }
+function riga(testo, classe) { const d = document.createElement("div"); d.textContent = testo; if (classe) d.className = classe; return d; }
+async function aggiornaPc() {
+  if (!attuale || $("#pc").classList.contains("nascosto")) return;
+  const id = attuale.id;
+  try {
+    const s = await (await api(`/api/bots/${id}/pc`)).json();
+    if (attuale?.id !== id) return;
+    const ora = $("#pc-ora");
+    ora.className = "ora" + (s.ora ? " attiva" : "");
+    ora.textContent = s.ora ? descriviTool(s.ora) : s.lavora ? "Sta pensando…" : "In attesa di istruzioni 💤";
+    $("#pc-cpu").textContent = s.cpu;
+    $("#pc-ram").textContent = s.memoriaPerc;
+    $("#pc-ram2").textContent = "Memoria · " + s.memoria.split("/")[0].trim();
+    $("#pc-disco").textContent = s.disco;
+    const f = $("#pc-file"); f.replaceChildren();
+    if (!s.file.length) f.append(riga("(nessun file per ora)", "tenue"));
+    for (const x of s.file) {
+      const prof = x.path.split("/").length - 1;
+      const nome = "  ".repeat(prof) + (x.dir ? "📁 " : "📄 ") + x.path.split("/").pop();
+      if (x.dir) { f.append(riga(nome)); continue; }
+      const b = document.createElement("button");
+      b.textContent = nome + "  ";
+      const info = document.createElement("span"); info.className = "tenue"; info.textContent = dimensione(x.size) + " · " + x.data;
+      b.append(info);
+      b.onclick = () => apriFile(id, x.path);
+      f.append(b);
+    }
+    const p = $("#pc-proc"); p.replaceChildren();
+    if (!s.processi.length) p.append(riga("(nessun programma attivo)", "tenue"));
+    for (const x of s.processi) p.append(riga(`${x.cpu.padStart(5)}%  ${x.tempo.padStart(8)}  ${x.cmd}`));
+    const st = $("#pc-storico"); st.replaceChildren();
+    if (!s.storico.length) st.append(riga("(niente da quando il server è acceso)", "tenue"));
+    for (const x of s.storico) st.append(riga(new Date(x.quando).toLocaleTimeString().slice(0, 5) + "  " + descriviTool(x)));
+  } catch (e) {
+    $("#pc-ora").textContent = "⚠️ " + e.message;
+  }
+}
+async function apriFile(id, rel) {
+  $("#visore-nome").textContent = "/root/" + rel;
+  $("#visore-testo").textContent = "Carico…";
+  $("#visore").showModal();
+  try {
+    const r = await (await api(`/api/bots/${id}/file?path=${encodeURIComponent(rel)}`)).json();
+    $("#visore-testo").textContent = r.error ? "⚠️ " + r.error : r.binario ? "(file non di testo: immagine, programma o archivio)" : (r.testo || "(file vuoto)");
+  } catch (e) { $("#visore-testo").textContent = "⚠️ " + e.message; }
+}
+function mostraPc(si) {
+  $("#pc").classList.toggle("nascosto", !si);
+  $("#app").classList.toggle("con-pc", si);
+  clearInterval(timerPc);
+  if (si) { $("#pc-titolo").textContent = "🖥️ Computer di " + attuale.name; aggiornaPc(); timerPc = setInterval(aggiornaPc, 3000); }
+}
+$("#apri-pc").onclick = () => attuale && mostraPc($("#pc").classList.contains("nascosto"));
+$("#chiudi-pc").onclick = () => mostraPc(false);
 
 if (cfg.password) api("/api/ping").then(avvia).catch(() => {});
 </script>

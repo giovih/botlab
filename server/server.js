@@ -263,6 +263,55 @@ async function gemini(bot, contents) {
 }
 
 const busy = new Set();
+// Cosa sta facendo ogni bot adesso, e le sue ultime azioni (per il pannello "PC")
+const attivita = new Map(); // id -> { ora: {name,args,da} | null, storico: [...] }
+function segnaAttivita(id, name, args) {
+  const a = attivita.get(id) || { ora: null, storico: [] };
+  a.ora = name ? { name, args, da: Date.now() } : null;
+  if (name) { a.storico.unshift({ name, args, quando: Date.now() }); a.storico.length = Math.min(a.storico.length, 30); }
+  attivita.set(id, a);
+}
+
+// Fotografia del computer del bot: risorse, processi, file
+async function statoPc(id) {
+  await ensureContainer(id);
+  const name = containerName(id);
+  const [stats, ps, files, disco] = await Promise.all([
+    run("docker", ["stats", "--no-stream", "--format", "{{.CPUPerc}}|{{.MemUsage}}|{{.MemPerc}}", name], { timeout: 15000 }),
+    run("docker", ["exec", name, "ps", "-eo", "pid,etime,pcpu,pmem,args", "--sort=-pcpu"], { timeout: 10000 }),
+    run("docker", ["exec", name, "find", "/root", "-maxdepth", "4", "-not", "-path", "*/.*", "-printf", "%y\t%s\t%TY-%Tm-%Td %TH:%TM\t%P\n"], { timeout: 10000 }),
+    run("docker", ["exec", name, "du", "-sh", "/root"], { timeout: 10000 }),
+  ]);
+  const [cpu, mem, memPerc] = stats.stdout.trim().split("|");
+  const processi = ps.stdout.trim().split("\n").slice(1)
+    .map((l) => l.trim().split(/\s+/))
+    .map(([pid, tempo, cpu, mem, ...cmd]) => ({ pid, tempo, cpu, mem, cmd: cmd.join(" ") }))
+    .filter((p) => p.cmd && !/^(sleep infinity|ps -eo|runc|timeout -k 5 |du -sh|find \/root|\[)/.test(p.cmd))
+    .slice(0, 20);
+  const elenco = files.stdout.split("\n").filter(Boolean).slice(0, 400).map((l) => {
+    const [tipo, size, data, ...p] = l.split("\t");
+    return { dir: tipo === "d", size: Number(size), data, path: p.join("\t") };
+  }).filter((f) => f.path).sort((a, b) => a.path.localeCompare(b.path));
+  const a = attivita.get(id) || { ora: null, storico: [] };
+  return {
+    acceso: stats.code === 0,
+    cpu: cpu || "?", memoria: mem || "?", memoriaPerc: memPerc || "?",
+    disco: (disco.stdout.split("\t")[0] || "?").trim(),
+    lavora: busy.has(id), ora: a.ora, storico: a.storico,
+    processi, file: elenco,
+  };
+}
+
+async function leggiFile(id, rel) {
+  const p = path.posix.normalize("/root/" + String(rel || ""));
+  if (!p.startsWith("/root/")) return { error: "percorso non valido" };
+  await ensureContainer(id);
+  // niente shell: il percorso arriva come argomento, quindi non può eseguire comandi
+  const r = await run("docker", ["exec", containerName(id), "head", "-c", "200000", "--", p], { timeout: 15000 });
+  if (r.code !== 0) return { error: r.stderr.trim() || "impossibile leggere il file" };
+  if (r.stdout.includes("\0")) return { path: p, binario: true };
+  return { path: p, testo: r.stdout };
+}
 
 async function chat(bot, text, emit) {
   const history = await loadHistory(bot.id);
@@ -278,7 +327,8 @@ async function chat(bot, text, emit) {
     const responses = [];
     for (const { functionCall: fc } of calls) {
       emit({ type: "tool", name: fc.name, args: fc.args || {} });
-      const result = await callTool(bot.id, fc.name, fc.args || {});
+      segnaAttivita(bot.id, fc.name, fc.args || {});
+      const result = await callTool(bot.id, fc.name, fc.args || {}).finally(() => segnaAttivita(bot.id, null));
       emit({ type: "tool_result", name: fc.name, result });
       responses.push({ functionResponse: { name: fc.name, response: result } });
     }
@@ -404,6 +454,8 @@ const server = http.createServer(async (req, res) => {
       await fs.rm(histFile(bot.id), { force: true });
       return send(res, 200, { ok: true });
     }
+    if (action === "pc" && req.method === "GET") return send(res, 200, await statoPc(bot.id));
+    if (action === "file" && req.method === "GET") return send(res, 200, await leggiFile(bot.id, url.searchParams.get("path")));
     if (action === "exec" && req.method === "POST") {
       const { command } = await readBody(req);
       return send(res, 200, await execInBot(bot.id, String(command || ""), 120));

@@ -61,6 +61,9 @@ ed eseguire comandi nel terminale. Tutto **gratis**: Oracle Cloud Free + Gemini 
 - **+ Nuovo** → dai un nome e (se vuoi) una personalità, es. *"Sei un esperto di Python"*.
 - Scrivi al bot: *"Cerca le ultime notizie su SpaceX e salvale in un file"*, *"Installa ffmpeg e dimmi la versione"*…
   Vedrai in nero ogni comando che esegue e ogni ricerca che fa (toccali per vedere l'output).
+- Il pulsante **🖥️ PC** apre il computer del bot: vedi **cosa sta facendo in quel momento** (si aggiorna da solo
+  ogni 3 secondi), quanta memoria e processore usa, i **programmi accesi**, le **ultime azioni** e tutti i
+  **file** che ha creato (toccali per leggerli).
 - Il pulsante **💬 Chat / ⌨️ Terminale** ti fa usare direttamente il terminale del bot.
 - 🧹 cancella la conversazione (i file restano), 🗑 elimina il bot e il suo computer.
 
